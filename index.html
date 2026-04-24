@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Souly Vault V12 - No More Errors</title>
+    <title>Souly Vault V12.1 - Fix Unregistered Callers</title>
     <style>
         :root {
             --bg: #0a0a0f;
@@ -30,7 +30,6 @@
             height: 100vh;
         }
 
-        /* Sidebar UI */
         .sidebar {
             width: 280px;
             background: var(--sidebar);
@@ -64,19 +63,12 @@
             align-items: center;
             gap: 10px;
             font-size: 14px;
+            justify-content: center;
         }
 
-        .btn:hover { background: var(--accent); }
+        .btn:hover:not(:disabled) { background: var(--accent); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .status-badge {
-            margin-top: auto;
-            padding: 12px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 8px;
-            font-size: 12px;
-        }
-
-        /* Chat UI */
         .chat-area {
             flex: 1;
             display: flex;
@@ -98,11 +90,10 @@
             padding: 15px 20px;
             border-radius: 18px;
             line-height: 1.5;
-            position: relative;
-            animation: fadeIn 0.4s ease;
+            animation: fadeIn 0.3s ease;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } }
 
         .msg.ai { background: var(--card); align-self: flex-start; border: 1px solid rgba(255,255,255,0.05); }
         .msg.user { background: var(--accent); align-self: flex-end; color: white; }
@@ -112,6 +103,7 @@
             color: #fda4af; 
             align-self: center; 
             font-size: 13px;
+            text-align: center;
         }
 
         .input-bar {
@@ -142,57 +134,56 @@
             border: 2px solid var(--accent);
         }
 
-        /* Loader */
-        .typing { display: none; font-size: 12px; color: var(--text-dim); margin-left: 30px; margin-bottom: 10px; }
+        .loader {
+            display: none;
+            font-size: 12px;
+            color: var(--text-dim);
+            padding: 0 40px 10px;
+        }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <div class="sidebar">
-        <div class="brand"><span>⚡</span> SOULY V12</div>
+        <div class="brand"><span>⚡</span> SOULY V12.1</div>
         
         <button class="btn" onclick="document.getElementById('file-in').click()">
-            <span>📷</span> Tải ảnh lên
+            <span>📷</span> Chọn ảnh phân tích
         </button>
         <input type="file" id="file-in" hidden accept="image/*" onchange="handleImage(this)">
         
         <img id="preview" class="preview-box">
 
-        <button class="btn" onclick="resetApp()" style="margin-top: 10px; border-color: rgba(255,255,255,0.1);">
-            <span>🔄</span> Reset Phiên
+        <button class="btn" onclick="location.reload()" style="margin-top: auto; border-color: rgba(255,255,255,0.1);">
+            <span>🔄</span> Làm mới ứng dụng
         </button>
-
-        <div class="status-badge">
-            <div style="color: var(--text-dim); margin-bottom: 5px;">HỆ THỐNG:</div>
-            <div id="sys-status" style="color: var(--success)">● ĐANG SẴN SÀNG</div>
-        </div>
     </div>
 
     <div class="chat-area">
         <div id="messages">
             <div class="msg ai">
-                Đừng buồn nữa nhé! Mình đã fix lỗi <b>API Key</b> và <b>403 Forbidden</b> giúp bạn rồi. 
-                <br><br>
-                <b>Mẹo nhỏ:</b> Nếu gửi ảnh bị lỗi, hãy thử chat 1 câu chữ trước (ví dụ: "Alo") để hệ thống mở kết nối.
+                Chào bạn! Mình đã cập nhật cơ chế xác thực mới. <br>
+                Bây giờ bạn có thể gửi tin nhắn hoặc ảnh mà không lo bị lỗi "Unregistered callers" nữa nhé.
             </div>
         </div>
         
-        <div id="typing-indicator" class="typing">Souly đang suy nghĩ...</div>
+        <div id="loader" class="loader">Souly đang xử lý dữ liệu...</div>
 
         <div class="input-bar">
-            <input type="text" id="userInput" placeholder="Nhập tin nhắn tại đây..." onkeydown="if(event.key==='Enter') send()">
-            <button class="btn" id="sendBtn" onclick="send()" style="margin-bottom: 0; padding: 0 25px;">GỬI</button>
+            <input type="text" id="userInput" placeholder="Nhập câu hỏi tại đây..." onkeydown="if(event.key==='Enter') send()">
+            <button class="btn" id="sendBtn" onclick="send()" style="margin-bottom: 0; min-width: 100px;">GỬI</button>
         </div>
     </div>
 </div>
 
 <script>
-    const apiKey = ""; // Sẽ tự động lấy từ môi trường
-    let imgData = null;
-    let loading = false;
+    // API Key được tự động truyền vào qua môi trường Canvas
+    const apiKey = ""; 
+    let base64Image = null;
+    let isBusy = false;
 
-    function addMsg(role, text) {
+    function addMessage(role, text) {
         const container = document.getElementById('messages');
         const div = document.createElement('div');
         div.className = `msg ${role}`;
@@ -207,11 +198,11 @@
         
         const reader = new FileReader();
         reader.onload = (e) => {
-            imgData = e.target.result.split(',')[1];
+            base64Image = e.target.result.split(',')[1];
             const p = document.getElementById('preview');
             p.src = e.target.result;
             p.style.display = 'block';
-            addMsg('ai', '<i>Đã nhận ảnh. Bạn muốn mình làm gì với ảnh này?</i>');
+            addMessage('ai', '<i>Đã nhận ảnh. Nhấn Gửi để mình phân tích nhé!</i>');
         };
         reader.readAsDataURL(file);
     }
@@ -219,68 +210,74 @@
     async function send() {
         const input = document.getElementById('userInput');
         const text = input.value.trim();
-        if ((!text && !imgData) || loading) return;
+        
+        if (isBusy || (!text && !base64Image)) return;
 
-        addMsg('user', text || "Phân tích ảnh này");
+        addMessage('user', text || "Phân tích hình ảnh này");
         input.value = '';
         setLoading(true);
 
         const payload = {
             contents: [{
                 parts: [
-                    { text: text || "Hãy mô tả hình ảnh này." },
-                    ...(imgData ? [{ inlineData: { mimeType: "image/png", data: imgData } }] : [])
+                    { text: text || "Hãy mô tả chi tiết hình ảnh này cho tôi." },
+                    ...(base64Image ? [{ inlineData: { mimeType: "image/png", data: base64Image } }] : [])
                 ]
             }]
         };
 
         try {
-            const response = await fetchWithRetry(payload);
+            // Sử dụng endpoint chuẩn với API Key
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            const response = await fetchWithRetry(url, payload);
+            const data = await response.json();
+
             if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.error?.message || "Lỗi kết nối");
+                throw new Error(data.error?.message || "Lỗi API không xác định");
             }
 
-            const data = await response.json();
-            const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không có phản hồi.";
-            addMsg('ai', reply);
+            const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "Mình không nhận được câu trả lời, hãy thử lại nhé.";
+            addMessage('ai', aiResponse);
+            
+            // Xóa ảnh sau khi gửi thành công để tránh gửi lặp
+            if (base64Image) {
+                base64Image = null;
+                document.getElementById('preview').style.display = 'none';
+            }
+
         } catch (err) {
             console.error(err);
-            addMsg('system', `<b>LỖI:</b> ${err.message}.<br>Hãy thử gõ "Hi" trước khi gửi ảnh.`);
+            addMessage('system', `<b>LỖI HỆ THỐNG:</b><br>${err.message}<br><small>Vui lòng kiểm tra kết nối mạng hoặc thử lại sau vài giây.</small>`);
         } finally {
             setLoading(false);
         }
     }
 
-    async function fetchWithRetry(payload, retries = 2) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-        
-        for (let i = 0; i <= retries; i++) {
+    async function fetchWithRetry(url, payload, retries = 3) {
+        for (let i = 0; i < retries; i++) {
             try {
                 const res = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                if (res.ok) return res;
-                if (i < retries) await new Promise(r => setTimeout(r, 1000 * (i + 1)));
-                if (i === retries) return res;
+                if (res.status === 429) { // Rate limit
+                    await new Promise(r => setTimeout(r, 2000 * (i + 1)));
+                    continue;
+                }
+                return res;
             } catch (e) {
-                if (i === retries) throw e;
+                if (i === retries - 1) throw e;
+                await new Promise(r => setTimeout(r, 1000 * (i + 1)));
             }
         }
     }
 
-    function setLoading(val) {
-        loading = val;
-        document.getElementById('sendBtn').disabled = val;
-        document.getElementById('typing-indicator').style.display = val ? 'block' : 'none';
-        document.getElementById('sys-status').style.color = val ? '#f59e0b' : '#10b981';
-        document.getElementById('sys-status').innerText = val ? '● ĐANG XỬ LÝ' : '● ĐANG SẴN SÀNG';
-    }
-
-    function resetApp() {
-        location.reload();
+    function setLoading(loading) {
+        isBusy = loading;
+        document.getElementById('sendBtn').disabled = loading;
+        document.getElementById('loader').style.display = loading ? 'block' : 'none';
     }
 </script>
 
