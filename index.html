@@ -3,211 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Souly Vault V13 - Multi-Model Adaptive</title>
+    <title>Souly Vault V14 - Ultra Stable</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --bg: #050507;
-            --sidebar: #0f0f13;
-            --card: #16161e;
-            --accent: #8b5cf6;
-            --text-main: #e2e8f0;
-            --text-dim: #64748b;
-            --error: #ef4444;
-            --border: rgba(255,255,255,0.08);
-        }
-
-        body, html { margin: 0; padding: 0; height: 100vh; background: var(--bg); color: var(--text-main); font-family: 'Inter', system-ui, sans-serif; overflow: hidden; }
-        .app-container { display: flex; height: 100vh; }
-
-        /* Sidebar */
-        .sidebar { width: 300px; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; }
-        .brand { font-weight: 900; font-size: 1.4rem; letter-spacing: -1px; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
-        .status-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
-
-        .config-group { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border); }
-        .label { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; margin-bottom: 8px; display: block; }
-        input, select { 
-            width: 100%; background: #000; border: 1px solid var(--border); color: white; 
-            padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; outline: none;
-        }
-        input:focus { border-color: var(--accent); }
-
-        /* Chat Area */
-        .chat-main { flex: 1; display: flex; flex-direction: column; position: relative; }
-        #chat-window { flex: 1; overflow-y: auto; padding: 40px 15%; display: flex; flex-direction: column; gap: 24px; }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         
-        .msg { max-width: 85%; padding: 16px 20px; border-radius: 20px; font-size: 15px; line-height: 1.6; animation: slideUp 0.3s ease; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .msg.user { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3); }
-        .msg.ai { align-self: flex-start; background: var(--card); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
-        .msg.system { align-self: center; background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.2); font-size: 12px; border-radius: 10px; }
-
-        .input-area { padding: 20px 15%; background: linear-gradient(transparent, var(--bg)); }
-        .input-box { 
-            background: var(--card); border: 1px solid var(--border); border-radius: 16px; 
-            display: flex; align-items: center; padding: 8px 16px; gap: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        :root {
+            --bg: #030303;
+            --accent: #6366f1;
+            --surface: #0a0a0c;
         }
-        .input-box input { border: none; background: transparent; margin: 0; flex: 1; font-size: 15px; }
 
-        .loading { display: none; padding: 10px; color: var(--accent); font-size: 12px; font-weight: bold; text-align: center; letter-spacing: 2px; }
+        body {
+            background-color: var(--bg);
+            color: #f1f1f1;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
 
-        pre { background: #000; padding: 15px; border-radius: 10px; overflow-x: auto; font-family: monospace; font-size: 13px; }
-        code { color: #f8fafc; }
-        .img-preview { width: 100%; border-radius: 12px; margin-bottom: 10px; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+        .glass-card {
+            background: rgba(10, 10, 12, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .ai-message {
+            background: #0d0d10;
+            border-left: 3px solid var(--accent);
+        }
+
+        .user-message {
+            background: #1a1a20;
+        }
+
+        .loader {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #FFF;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
-<body>
+<body class="h-screen overflow-hidden flex">
 
-<div class="app-container">
-    <div class="sidebar">
-        <div class="brand"><div class="status-dot"></div> SOULY V13</div>
-        
-        <div id="history-list" style="flex:1; overflow-y:auto"></div>
-
-        <div class="config-group">
-            <label class="label">Priority Model</label>
-            <select id="modelSelect">
-                <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Recommended)</option>
-                <option value="gemini-1.5-flash">Gemini 1.5 Flash (Stable)</option>
-                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-            </select>
-
-            <label class="label">API Key</label>
-            <input type="password" id="apiKey" placeholder="Paste Google API Key...">
-            
-            <button onclick="createNewChat()" style="width:100%; padding:10px; background:var(--accent); border:none; color:white; border-radius:8px; cursor:pointer; font-weight:bold;">NEW SESSION</button>
+    <!-- Sidebar -->
+    <aside class="w-72 glass-card flex flex-col p-6 hidden md:flex">
+        <div class="mb-10 text-xl font-extrabold tracking-tighter flex items-center gap-2">
+            <div class="w-3 h-3 bg-indigo-500 rounded-full animate-pulse"></div>
+            SOULY V14
         </div>
-    </div>
 
-    <div class="chat-main">
-        <div id="chat-window"></div>
-        
-        <div class="input-area">
-            <div id="loader" class="loading">ADAPTING CHANNEL...</div>
-            <div class="input-box">
-                <input type="text" id="userInput" placeholder="Nhập yêu cầu tại đây..." onkeydown="if(event.key==='Enter') startSequence()">
-                <input type="file" id="fileInput" hidden accept="image/*" onchange="previewImage(this)">
-                <button onclick="document.getElementById('fileInput').click()" style="background:none; border:none; color:var(--text-dim); cursor:pointer">🖼️</button>
-                <button onclick="startSequence()" style="background:none; border:none; color:var(--accent); font-weight:900; cursor:pointer">SEND</button>
+        <div class="space-y-6 flex-1 overflow-y-auto custom-scroll">
+            <div>
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">Model Selector</label>
+                <select id="modelSelect" class="w-full bg-black border border-white/10 rounded-lg p-2.5 text-sm focus:border-indigo-500 outline-none transition-all">
+                    <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ổn định nhất)</option>
+                    <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                    <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">API Secret</label>
+                <input type="password" id="apiKey" placeholder="..." class="w-full bg-black border border-white/10 rounded-lg p-2.5 text-sm focus:border-indigo-500 outline-none transition-all">
+            </div>
+
+            <div class="p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/10 text-xs text-indigo-300 leading-relaxed">
+                Hệ thống đang chạy chế độ <b>Hybrid Endpoint</b>. Nếu <i>v1beta</i> bị lỗi Gateway, hệ thống sẽ tự động dùng <i>v1</i>.
             </div>
         </div>
-    </div>
-</div>
 
-<script>
-    let currentImg = null;
-    let isProcessing = false;
+        <button onclick="window.location.reload()" class="mt-4 p-3 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold transition-all uppercase tracking-widest">
+            Tạo phiên mới
+        </button>
+    </aside>
 
-    // Danh sách các ID mô hình dự phòng nếu mô hình chính lỗi
-    const FALLBACK_MODELS = [
-        "gemini-2.0-flash-exp",
-        "gemini-1.5-flash",
-        "gemini-1.5-flash-8b",
-        "gemini-1.5-pro"
-    ];
+    <!-- Main Chat -->
+    <main class="flex-1 flex flex-col relative h-full">
+        <div id="chatContainer" class="flex-1 overflow-y-auto p-6 md:p-12 space-y-8 custom-scroll">
+            <div class="ai-message p-6 rounded-2xl max-w-3xl">
+                <p class="text-sm leading-relaxed">Hệ thống <b>Souly V14</b> đã sẵn sàng. Bản cập nhật này tập trung vào xử lý lỗi <b>v1beta Gateway</b> và <b>404 Model Not Found</b>.</p>
+                <p class="mt-4 text-xs text-gray-500 italic">Vui lòng dán API Key vào thanh bên trái để bắt đầu.</p>
+            </div>
+        </div>
 
-    function init() {
-        const key = localStorage.getItem('souly_key');
-        if(key) document.getElementById('apiKey').value = key;
-        createNewChat();
-    }
+        <div class="p-6 md:p-12 pt-0">
+            <div class="max-w-4xl mx-auto relative group">
+                <div id="loadingIndicator" class="absolute -top-10 left-0 hidden items-center gap-2 text-indigo-400 text-xs font-bold">
+                    <span class="loader"></span> HỆ THỐNG ĐANG PHÂN TÍCH...
+                </div>
 
-    function createNewChat() {
-        document.getElementById('chat-window').innerHTML = `
-            <div class="msg ai">Chào bạn! Tôi là Souly V13. Tôi đã được cập nhật hệ thống <b>Adaptive Model Selection</b> để tránh lỗi 'Model not found' bạn vừa gặp. Hãy thử lại nhé!</div>
-        `;
-    }
+                <div class="glass-card rounded-2xl p-2 flex items-center shadow-2xl transition-all group-focus-within:border-indigo-500/50">
+                    <button onclick="document.getElementById('imageInput').click()" class="p-3 text-gray-500 hover:text-indigo-400 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </button>
+                    <input type="file" id="imageInput" class="hidden" accept="image/*" onchange="handleImage(this)">
+                    <input type="text" id="userInput" placeholder="Hỏi bất cứ điều gì..." class="flex-1 bg-transparent border-none outline-none p-3 text-sm" onkeydown="if(event.key==='Enter') sendMessage()">
+                    <button onclick="sendMessage()" class="bg-indigo-600 hover:bg-indigo-500 p-3 px-6 rounded-xl text-white font-bold text-sm transition-all shadow-lg shadow-indigo-500/20">
+                        GỬI
+                    </button>
+                </div>
+                <div id="imageStatus" class="mt-2 text-[10px] font-bold text-indigo-400 px-4 hidden">HÌNH ẢNH ĐÃ ĐƯỢC NẠP</div>
+            </div>
+        </div>
+    </main>
 
-    function previewImage(input) {
-        const file = input.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = e => currentImg = e.target.result;
-        reader.readAsDataURL(file);
-    }
+    <script>
+        let currentImageData = null;
+        let isProcessing = false;
 
-    async function startSequence() {
-        const text = document.getElementById('userInput').value.trim();
-        const key = document.getElementById('apiKey').value.trim();
-        const preferredModel = document.getElementById('modelSelect').value;
+        function handleImage(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentImageData = e.target.result.split(',')[1];
+                document.getElementById('imageStatus').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
 
-        if(!text || isProcessing) return;
-        if(!key) return alert("Vui lòng nhập API Key!");
-
-        localStorage.setItem('souly_key', key);
-        isProcessing = true;
-        document.getElementById('loader').style.display = 'block';
-        
-        // Hiển thị tin nhắn user
-        addMessage('user', text, currentImg);
-        document.getElementById('userInput').value = '';
-
-        // Bắt đầu thử các mô hình
-        let success = false;
-        let modelsToTry = [preferredModel, ...FALLBACK_MODELS.filter(m => m !== preferredModel)];
-
-        for(let model of modelsToTry) {
-            try {
-                const result = await callAPI(model, key, text, currentImg);
-                addMessage('ai', result);
-                success = true;
-                break; 
-            } catch (err) {
-                console.warn(`Model ${model} failed, trying next...`, err);
+        async function sendMessage() {
+            const text = document.getElementById('userInput').value.trim();
+            const key = document.getElementById('apiKey').value.trim();
+            const model = document.getElementById('modelSelect').value;
+            
+            if (!text || isProcessing) return;
+            if (!key) {
+                renderMessage('system', 'Lỗi: Vui lòng nhập API Key ở sidebar.');
+                return;
             }
+
+            isProcessing = true;
+            toggleLoading(true);
+            renderMessage('user', text);
+            document.getElementById('userInput').value = '';
+
+            // Luồng gọi API với cơ chế dự phòng Version
+            const versions = ['v1beta', 'v1'];
+            let responseText = null;
+            let lastError = "";
+
+            for (const v of versions) {
+                try {
+                    responseText = await callGemini(v, model, key, text);
+                    if (responseText) break;
+                } catch (e) {
+                    lastError = e.message;
+                    console.warn(`Thất bại với ${v}: ${e.message}`);
+                }
+            }
+
+            if (responseText) {
+                renderMessage('ai', responseText);
+            } else {
+                renderMessage('system', `LỖI HỆ THỐNG: ${lastError}. Hãy thử đổi sang mô hình "Gemini 1.5 Flash (Ổn định nhất)"`);
+            }
+
+            isProcessing = false;
+            toggleLoading(false);
+            currentImageData = null;
+            document.getElementById('imageStatus').classList.add('hidden');
         }
 
-        if(!success) {
-            addMessage('system', "Tất cả các mô hình hiện tại đều không phản hồi. Vui lòng kiểm tra lại API Key hoặc trạng thái tài khoản Google AI của bạn.");
+        async function callGemini(version, model, key, text) {
+            const endpoint = `https://generativelanguage.googleapis.com/${version}/models/${model}:generateContent?key=${key}`;
+            
+            const payload = {
+                contents: [{
+                    parts: [{ text: text }]
+                }]
+            };
+
+            if (currentImageData) {
+                payload.contents[0].parts.push({
+                    inlineData: { mimeType: "image/jpeg", data: currentImageData }
+                });
+            }
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error?.message || `HTTP ${response.status}`);
+            }
+
+            return data.candidates[0].content.parts[0].text;
         }
 
-        isProcessing = false;
-        document.getElementById('loader').style.display = 'none';
-        currentImg = null;
-    }
+        function renderMessage(role, text) {
+            const container = document.getElementById('chatContainer');
+            const div = document.createElement('div');
+            
+            if (role === 'user') {
+                div.className = "user-message p-6 rounded-2xl max-w-3xl ml-auto text-sm leading-relaxed";
+                div.innerText = text;
+            } else if (role === 'ai') {
+                div.className = "ai-message p-6 rounded-2xl max-w-4xl text-sm leading-relaxed space-y-4";
+                div.innerHTML = formatAIResponse(text);
+            } else {
+                div.className = "bg-red-500/10 border border-red-500/20 p-4 rounded-xl text-xs text-red-400 font-mono";
+                div.innerText = text;
+            }
 
-    async function callAPI(model, key, text, img) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-        
-        const contents = [{ parts: [{ text }] }];
-        if(img) {
-            const b64 = img.split(',')[1];
-            contents[0].parts.push({ inlineData: { mimeType: "image/jpeg", data: b64 } });
+            container.appendChild(div);
+            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
         }
 
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents })
+        function formatAIResponse(text) {
+            return text
+                .replace(/```(.*?)\n([\s\S]*?)```/g, '<pre class="bg-black/50 p-4 rounded-xl overflow-x-auto my-4"><code class="text-indigo-300 font-mono text-xs">$2</code></pre>')
+                .replace(/\*\*(.*?)\*\*/g, '<b class="text-indigo-400">$1</b>')
+                .replace(/\n/g, '<br>');
+        }
+
+        function toggleLoading(show) {
+            document.getElementById('loadingIndicator').classList.toggle('hidden', !show);
+            document.getElementById('loadingIndicator').classList.toggle('flex', show);
+        }
+
+        // Lưu key tự động
+        document.getElementById('apiKey').addEventListener('input', (e) => {
+            localStorage.setItem('gemini_key_vault', e.target.value);
         });
 
-        const data = await res.json();
-        if(!res.ok) throw new Error(data.error?.message || "Unknown error");
-        return data.candidates[0].content.parts[0].text;
-    }
-
-    function addMessage(role, text, img = null) {
-        const win = document.getElementById('chat-window');
-        const div = document.createElement('div');
-        div.className = `msg ${role}`;
-        
-        let content = "";
-        if(img) content += `<img src="${img}" class="img-preview">`;
-        
-        // Simple Markdown
-        const formattedText = text
-            .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-            .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
-            .replace(/\n/g, '<br>');
-
-        div.innerHTML = content + formattedText;
-        win.appendChild(div);
-        win.scrollTop = win.scrollHeight;
-    }
-
-    init();
-</script>
+        window.onload = () => {
+            const saved = localStorage.getItem('gemini_key_vault');
+            if (saved) document.getElementById('apiKey').value = saved;
+        };
+    </script>
 </body>
 </html>
