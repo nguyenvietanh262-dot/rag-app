@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Souly Vault V12.3 - Stable Model</title>
+    <title>Souly Vault V12.4 - Auto Stability</title>
     <style>
         :root {
             --bg: #0a0a0f;
@@ -30,9 +30,8 @@
             height: 100vh;
         }
 
-        /* Sidebar */
         .sidebar {
-            width: 300px;
+            width: 320px;
             background: var(--sidebar);
             border-right: 1px solid rgba(255,255,255,0.05);
             display: flex;
@@ -61,7 +60,7 @@
 
         .key-input-group {
             background: rgba(255,255,255,0.03);
-            padding: 10px;
+            padding: 12px;
             border-radius: 8px;
             margin-bottom: 20px;
         }
@@ -71,7 +70,7 @@
             background: #000;
             border: 1px solid #333;
             color: var(--success);
-            padding: 8px;
+            padding: 10px;
             border-radius: 5px;
             font-size: 12px;
             box-sizing: border-box;
@@ -98,7 +97,6 @@
         .btn.primary { background: var(--accent); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* Main Chat */
         .chat-area {
             flex: 1;
             display: flex;
@@ -122,11 +120,12 @@
             line-height: 1.6;
             animation: fadeIn 0.3s ease;
             word-wrap: break-word;
+            font-size: 15px;
         }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } }
 
-        .msg.ai { background: var(--card); align-self: flex-start; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .msg.ai { background: var(--card); align-self: flex-start; border: 1px solid rgba(255,255,255,0.05); }
         .msg.user { background: var(--accent); align-self: flex-end; color: white; }
         .msg.system { 
             background: rgba(244, 63, 94, 0.1); 
@@ -134,15 +133,13 @@
             color: #fda4af; 
             align-self: center; 
             font-size: 13px;
-            text-align: center;
-            max-width: 90%;
         }
 
         .input-bar {
             padding: 20px 40px;
             display: flex;
             gap: 15px;
-            background: rgba(10,10,15,0.9);
+            background: rgba(10,10,15,0.95);
             border-top: 1px solid rgba(255,255,255,0.05);
         }
 
@@ -156,8 +153,6 @@
             outline: none;
             font-size: 15px;
         }
-
-        .main-input:focus { border-color: var(--accent); }
 
         .preview-box {
             width: 100%;
@@ -175,7 +170,6 @@
             color: var(--accent);
             padding: 0 40px 10px;
             font-weight: bold;
-            font-style: italic;
         }
     </style>
 </head>
@@ -183,48 +177,58 @@
 
 <div class="app-container">
     <div class="sidebar">
-        <div class="brand"><span>⚡</span> SOULY V12.3</div>
+        <div class="brand"><span>⚡</span> SOULY V12.4</div>
         
-        <div class="section-label">API Key Cá Nhân</div>
+        <div class="section-label">Xác thực API</div>
         <div class="key-input-group">
-            <input type="password" id="customApiKey" class="small-input" placeholder="Dán Gemini API Key...">
-            <p style="font-size: 10px; color: var(--text-dim); margin-top: 5px;">* Sử dụng model: <b>gemini-1.5-flash</b> để ổn định nhất.</p>
+            <input type="password" id="customApiKey" class="small-input" placeholder="Dán Gemini API Key của bạn...">
+            <p style="font-size: 10px; color: var(--text-dim); margin-top: 8px;">
+                Cơ chế: <b>Tự động chọn model khả dụng</b> (Flash/Pro)
+            </p>
         </div>
 
-        <div class="section-label">Công cụ</div>
+        <div class="section-label">Hình ảnh</div>
         <button class="btn primary" onclick="document.getElementById('file-in').click()">
-            <span>📷</span> Tải ảnh lên
+            <span>📷</span> Chọn ảnh
         </button>
         <input type="file" id="file-in" hidden accept="image/*" onchange="handleImage(this)">
-        
         <img id="preview" class="preview-box">
 
-        <button class="btn" onclick="location.reload()" style="margin-top: auto;">
-            <span>🔄</span> Làm mới trang
-        </button>
+        <div style="margin-top: auto; padding-top: 20px;">
+            <button class="btn" style="width: 100%;" onclick="location.reload()">
+                <span>🔄</span> Reset Session
+            </button>
+        </div>
     </div>
 
     <div class="chat-area">
         <div id="messages">
             <div class="msg ai">
-                Đã cập nhật hệ thống! Mình đã chuyển sang dùng <b>Gemini 1.5 Flash</b> - phiên bản ổn định nhất hiện nay để tránh lỗi "Not Found".<br><br>
-                Hãy dán API Key của bạn vào ô bên trái và bắt đầu nhé!
+                Chào bạn! Mình đã cập nhật cơ chế <b>Auto-Selection</b>. <br><br>
+                Nếu model <code>gemini-1.5-flash</code> bị lỗi "Not Found", hệ thống sẽ tự động chuyển sang <code>gemini-1.5-flash-latest</code> hoặc <code>gemini-1.5-pro</code> để đảm bảo bạn luôn nhận được câu trả lời.
             </div>
         </div>
         
-        <div id="loader" class="loader">Souly đang xử lý...</div>
+        <div id="loader" class="loader">Đang kết nối với trí tuệ nhân tạo...</div>
 
         <div class="input-bar">
-            <input type="text" id="userInput" class="main-input" placeholder="Nhập tin nhắn..." onkeydown="if(event.key==='Enter') send()">
-            <button class="btn primary" id="sendBtn" onclick="send()" style="margin-bottom: 0; padding: 0 25px;">GỬI</button>
+            <input type="text" id="userInput" class="main-input" placeholder="Hỏi Souly bất cứ điều gì..." onkeydown="if(event.key==='Enter') send()">
+            <button class="btn primary" id="sendBtn" onclick="send()" style="margin-bottom: 0; width: 100px;">GỬI</button>
         </div>
     </div>
 </div>
 
 <script>
-    const defaultApiKey = ""; 
     let base64Image = null;
     let isBusy = false;
+
+    // Danh sách các model để thử sai (fallback list)
+    const MODEL_LIST = [
+        "gemini-1.5-flash-latest",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro-latest",
+        "gemini-1.5-pro"
+    ];
 
     function addMessage(role, text) {
         const container = document.getElementById('messages');
@@ -242,86 +246,87 @@
         const reader = new FileReader();
         reader.onload = (e) => {
             base64Image = e.target.result.split(',')[1];
-            const p = document.getElementById('preview');
-            p.src = e.target.result;
-            p.style.display = 'block';
-            addMessage('ai', '<i>🖼️ Ảnh đã sẵn sàng. Bạn muốn hỏi gì về ảnh này không?</i>');
+            document.getElementById('preview').src = e.target.result;
+            document.getElementById('preview').style.display = 'block';
+            addMessage('ai', '<i>Đã nhận diện hình ảnh. Bạn muốn mình làm gì với ảnh này?</i>');
         };
         reader.readAsDataURL(file);
     }
 
     async function send() {
         const input = document.getElementById('userInput');
-        const customKey = document.getElementById('customApiKey').value.trim();
+        const apiKey = document.getElementById('customApiKey').value.trim();
         const text = input.value.trim();
-        
-        const activeKey = customKey || defaultApiKey;
 
         if (isBusy || (!text && !base64Image)) return;
         
-        if (!activeKey) {
-            addMessage('system', "LỖI: Bạn chưa nhập API Key cá nhân ở cột bên trái.");
+        if (!apiKey) {
+            addMessage('system', "⚠️ LỖI: Vui lòng dán API Key vào ô bên trái để sử dụng.");
             return;
         }
 
-        addMessage('user', text || "Xem hình ảnh này");
+        addMessage('user', text || "Phân tích ảnh");
         input.value = '';
         setLoading(true);
 
         const payload = {
             contents: [{
                 parts: [
-                    { text: text || "Phân tích hình ảnh này." },
+                    { text: text || "Mô tả hình ảnh này một cách chi tiết." },
                     ...(base64Image ? [{ inlineData: { mimeType: "image/png", data: base64Image } }] : [])
                 ]
             }]
         };
 
-        try {
-            // Chuyển sang model 1.5 flash để tương thích tối đa với mọi Key
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
-            
-            const response = await fetchWithRetry(url, payload);
-            const data = await response.json();
+        let lastError = "";
+        let success = false;
 
-            if (!response.ok) {
-                throw new Error(data.error?.message || "Lỗi API");
-            }
-
-            const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không nhận được phản hồi.";
-            addMessage('ai', aiResponse);
-            
-            if (base64Image) {
-                base64Image = null;
-                document.getElementById('preview').style.display = 'none';
-                document.getElementById('file-in').value = '';
-            }
-
-        } catch (err) {
-            addMessage('system', `<b>LỖI:</b> ${err.message}`);
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    async function fetchWithRetry(url, payload, retries = 3) {
-        for (let i = 0; i < retries; i++) {
+        // Vòng lặp thử từng model cho đến khi thành công
+        for (const modelName of MODEL_LIST) {
             try {
-                const res = await fetch(url, {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+                
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                if (res.status === 429) {
-                    await new Promise(r => setTimeout(r, 2000 * (i + 1)));
-                    continue;
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (aiResponse) {
+                        addMessage('ai', aiResponse);
+                        success = true;
+                        break; // Thoát vòng lặp khi thành công
+                    }
+                } else {
+                    // Nếu lỗi do Model Not Found (404), tiếp tục thử model khác
+                    if (response.status === 404) {
+                        console.log(`Model ${modelName} not found, trying next...`);
+                        continue;
+                    }
+                    throw new Error(data.error?.message || "Lỗi không xác định");
                 }
-                return res;
-            } catch (e) {
-                if (i === retries - 1) throw e;
-                await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+            } catch (err) {
+                lastError = err.message;
+                // Nếu là lỗi mạng hoặc lỗi API khác, thử tiếp
+                continue;
             }
         }
+
+        if (!success) {
+            addMessage('system', `<b>LỖI KHÔNG THỂ KẾT NỐI:</b> Các model đều trả về lỗi hoặc không tìm thấy. <br> Chi tiết lỗi cuối: ${lastError}`);
+        } else {
+            // Xóa ảnh sau khi gửi thành công
+            if (base64Image) {
+                base64Image = null;
+                document.getElementById('preview').style.display = 'none';
+            }
+        }
+
+        setLoading(false);
     }
 
     function setLoading(loading) {
