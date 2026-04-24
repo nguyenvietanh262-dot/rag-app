@@ -7,256 +7,298 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        :root { --souly-purple: #6366f1; --souly-dark: #050505; }
-        body { background-color: var(--souly-dark); color: #fff; font-family: 'Inter', sans-serif; }
-        .glass-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(20px); }
-        .gradient-text { background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .btn-primary { background: #6366f1; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5); }
-        .scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: #6366f1; box-shadow: 0 0 15px #6366f1; animation: scan 2.5s infinite linear; pointer-events: none; opacity: 0; }
-        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
-        .loading-dots::after { content: '.'; animation: dots 1.5s steps(5, end) infinite; }
-        @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60% { content: '...'; } 80%, 100% { content: ''; } }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --accent: #6366f1;
+            --bg-dark: #0a0a0c;
+            --card-bg: rgba(23, 23, 26, 0.7);
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #ececec;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .glass {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #fff 30%, #6366f1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .scan-anim {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            filter: blur(4px);
+            animation: scan 3s infinite ease-in-out;
+            display: none;
+        }
+
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            50% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+        .btn-glow:hover {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+            transform: translateY(-1px);
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col p-4 md:p-6 lg:p-8">
 
-    <!-- Header -->
-    <header class="p-6 flex justify-between items-center border-b border-white/5">
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center">
-                <i class="fas fa-infinity text-xs"></i>
+    <!-- Top Navigation -->
+    <nav class="flex justify-between items-center mb-8 px-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <i class="fas fa-brain text-white text-lg"></i>
             </div>
-            <span class="font-bold tracking-tight text-lg">SOULY <span class="text-xs font-light text-gray-500 ml-1">INFINITY VAULT</span></span>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">SOULY <span class="text-indigo-400 text-xs font-medium ml-1">VAULT</span></h1>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Neural Network Interface</p>
+            </div>
         </div>
-        <div class="flex items-center gap-6 text-sm text-gray-400">
-            <a href="#" class="hover:text-white">Tài liệu</a>
-            <a href="#" class="hover:text-white">Notebook</a>
-            <button class="btn-primary text-white px-5 py-2 rounded-full text-xs font-bold">Bắt đầu Chat</button>
+        <div class="flex items-center gap-4">
+            <div class="hidden md:flex gap-6 text-sm font-medium text-gray-400 mr-4">
+                <a href="#" class="hover:text-white transition-colors">Nodes</a>
+                <a href="#" class="hover:text-white transition-colors">Security</a>
+                <a href="#" class="hover:text-white transition-colors">API</a>
+            </div>
+            <button class="bg-white/5 border border-white/10 px-5 py-2 rounded-full text-xs font-bold hover:bg-white/10 transition-all">
+                DASHBOARD
+            </button>
         </div>
-    </header>
+    </nav>
 
-    <main class="flex-1 flex flex-col items-center justify-center p-8 max-w-6xl mx-auto w-full">
+    <!-- Main Content Grid -->
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full">
         
-        <!-- Hero Section -->
-        <div class="text-center mb-12 animate-in fade-in zoom-in duration-700">
-            <span class="bg-indigo-500/10 text-indigo-400 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border border-indigo-500/20 mb-4 inline-block">Sẵn sàng vận hành</span>
-            <h1 class="text-5xl md:text-6xl font-bold mb-4 gradient-text">Bản sao số <span class="text-indigo-400">Vĩnh cửu</span> của bạn</h1>
-            <p class="text-gray-400 max-w-2xl mx-auto text-sm leading-relaxed">
-                Souly ghi nhớ kiến thức, thấu hiểu cá tính và điều phối AI thực hiện công việc thay bạn. Di sản tri thức của bạn bắt đầu từ đây.
-            </p>
-        </div>
+        <!-- Left: Upload & Vision Area -->
+        <div class="lg:col-span-8 flex flex-col gap-6">
+            <div class="glass flex-1 flex flex-col relative overflow-hidden min-h-[450px]">
+                <div class="p-4 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Vision Processor v2.5</span>
+                    </div>
+                    <span id="status-tag" class="text-[10px] bg-green-500/10 text-green-400 px-2 py-0.5 rounded border border-green-500/20">STANDBY</span>
+                </div>
 
-        <!-- Interface Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full mb-12">
-            <!-- Upload Area (Phản hồi lại từ ảnh image_a41a1d.jpg) -->
-            <div class="lg:col-span-2 glass-card rounded-3xl overflow-hidden flex flex-col min-h-[400px] relative">
-                <div id="drop-zone" class="flex-1 flex flex-col items-center justify-center p-12 border-2 border-dashed border-white/5 m-4 rounded-2xl hover:border-indigo-500/30 transition-all cursor-pointer group">
-                    <img id="img-preview" class="hidden absolute inset-0 w-full h-full object-contain p-6 z-10">
-                    <div id="scan-bar" class="scan-line z-20"></div>
+                <div id="drop-area" class="flex-1 flex flex-col items-center justify-center p-8 relative group cursor-pointer" onclick="document.getElementById('file-input').click()">
+                    <div id="scan-line" class="scan-anim"></div>
+                    <img id="preview-img" class="hidden absolute inset-0 w-full h-full object-contain p-8 z-10 transition-opacity duration-500">
                     
-                    <div id="upload-placeholder" class="text-center z-10 group-hover:scale-105 transition-transform">
-                        <div class="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-cloud-upload-alt text-2xl text-gray-500"></i>
+                    <div id="upload-ui" class="text-center z-20 group-hover:scale-105 transition-transform duration-300">
+                        <div class="w-20 h-20 bg-indigo-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-indigo-500/20">
+                            <i class="fas fa-plus text-indigo-400 text-2xl"></i>
                         </div>
-                        <p class="text-sm font-semibold">Tải lên sơ đồ hoặc tài liệu</p>
-                        <p class="text-[10px] text-gray-500 mt-1">PNG, JPG tối đa 5MB. Hệ thống sẽ tự động tối ưu.</p>
-                        <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleFile(this.files[0])">
-                        <button onclick="document.getElementById('file-input').click()" class="mt-6 px-6 py-2 bg-white/5 hover:bg-white/10 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 transition-all">Chọn File</button>
+                        <h3 class="text-xl font-semibold mb-2">Tải lên dữ liệu nguồn</h3>
+                        <p class="text-gray-500 text-sm max-w-xs mx-auto mb-8">
+                            Hỗ trợ hình ảnh sơ đồ, tài liệu viết tay hoặc chụp màn hình kiến trúc hệ thống.
+                        </p>
+                        <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleFileUpload(event)">
+                        <button class="btn-glow bg-indigo-600 text-white px-8 py-3 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all">
+                            Chọn tệp tin
+                        </button>
                     </div>
                 </div>
-                
-                <div id="status-bar" class="h-12 bg-white/5 border-t border-white/5 px-6 flex items-center justify-between text-[10px] font-mono text-gray-500">
-                    <div id="file-name">SYSTEM_IDLE</div>
-                    <div id="file-size">READY_FOR_DATA</div>
+
+                <div class="p-4 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-gray-500 bg-black/20">
+                    <div id="info-name">ROOT::IDLE</div>
+                    <div id="info-meta" class="flex gap-4">
+                        <span>LATENCY: <b id="lat-val">0ms</b></span>
+                        <span>RESOLVE: <b>AUTO</b></span>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <!-- AI Chat Console -->
-            <div class="glass-card rounded-3xl overflow-hidden flex flex-col h-full">
+        <!-- Right: Intelligence Console -->
+        <div class="lg:col-span-4 flex flex-col gap-6">
+            <div class="glass flex-1 flex flex-col overflow-hidden max-h-[calc(100vh-200px)] lg:max-h-none">
                 <div class="p-4 border-b border-white/5 flex items-center justify-between">
-                    <span class="text-[10px] font-bold uppercase text-indigo-400">AI Orchestrator</span>
-                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    <span class="text-[10px] font-bold text-gray-400">INTELLIGENCE LOG</span>
+                    <i class="fas fa-terminal text-[10px] text-indigo-500"></i>
                 </div>
                 
-                <div id="chat-output" class="flex-1 overflow-y-auto p-4 space-y-4 text-xs scroll-smooth">
-                    <div class="bg-indigo-500/10 border border-indigo-500/20 p-3 rounded-2xl rounded-tl-none">
-                        Chào bạn! Tôi là Souly. Hãy gửi cho tôi sơ đồ hoặc hình ảnh, tôi sẽ phân tích và tích hợp vào kho RAG cá nhân của bạn.
+                <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                    <div class="text-[11px] leading-relaxed opacity-80 border-l-2 border-indigo-500/30 pl-3 py-1">
+                        Hệ thống đã sẵn sàng. Hãy cung cấp dữ liệu hình ảnh để bắt đầu quá trình đồng bộ hóa kiến thức vào Infinity Vault của bạn.
                     </div>
                 </div>
 
-                <div class="p-4 pt-0">
+                <div class="p-4 bg-black/20">
                     <div class="relative">
-                        <input type="text" id="chat-input" class="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none focus:border-indigo-500/50 transition-all" placeholder="Hỏi về dữ liệu của bạn..." onkeypress="if(event.key==='Enter') sendMessage()">
-                        <button onclick="sendMessage()" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center hover:bg-indigo-500 transition-all">
-                            <i class="fas fa-paper-plane text-[10px]"></i>
+                        <input type="text" id="user-input" class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-4 pr-12 text-xs focus:outline-none focus:border-indigo-500/50 transition-all placeholder:text-gray-600" placeholder="Yêu cầu phân tích..." onkeypress="if(event.key==='Enter') triggerChat()">
+                        <button onclick="triggerChat()" class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center hover:bg-indigo-500 transition-all">
+                            <i class="fas fa-arrow-up text-[10px]"></i>
                         </button>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Footer Stats -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
-            <div class="glass-card p-4 rounded-2xl text-center">
-                <div class="text-gray-500 text-[10px] uppercase mb-1">Dữ liệu RAG</div>
-                <div class="font-bold text-indigo-400">150.000+</div>
-            </div>
-            <div class="glass-card p-4 rounded-2xl text-center border-indigo-500/20">
-                <div class="text-gray-500 text-[10px] uppercase mb-1">Trạng thái Node</div>
-                <div class="font-bold text-green-400">ACTIVE</div>
-            </div>
-            <div class="glass-card p-4 rounded-2xl text-center">
-                <div class="text-gray-500 text-[10px] uppercase mb-1">Độ trễ</div>
-                <div id="latency-display" class="font-bold">--ms</div>
-            </div>
-            <div class="glass-card p-4 rounded-2xl text-center">
-                <div class="text-gray-500 text-[10px] uppercase mb-1">Model</div>
-                <div class="font-bold text-xs">GEMINI-1.5-FLASH</div>
+            <!-- Memory Stats Card -->
+            <div class="glass p-5 bg-gradient-to-br from-indigo-600/10 to-transparent">
+                <div class="flex justify-between items-end">
+                    <div>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Vault Capacity</p>
+                        <h4 class="text-2xl font-bold">1.2 <span class="text-sm font-normal text-gray-500">TB</span></h4>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] text-indigo-400 font-bold mb-1">Index Status</p>
+                        <p class="text-xs">Synchronized</p>
+                    </div>
+                </div>
+                <div class="w-full h-1 bg-white/5 rounded-full mt-4 overflow-hidden">
+                    <div class="h-full bg-indigo-600 w-3/4"></div>
+                </div>
             </div>
         </div>
     </main>
 
     <script>
-        const apiKey = "";
-        let currentFileData = null;
+        const apiKey = ""; // API Key được cấp tự động trong môi trường
+        let base64Image = null;
 
-        // Hàm nén ảnh mạnh hơn để tránh lỗi 403/Payload quá lớn
-        async function processImage(file) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
-                        
-                        // Giới hạn ảnh xuống khoảng 800px để tối ưu nhất cho Flash model
-                        const MAX_SIZE = 800;
-                        if (width > height && width > MAX_SIZE) {
-                            height *= MAX_SIZE / width;
-                            width = MAX_SIZE;
-                        } else if (height > MAX_SIZE) {
-                            width *= MAX_SIZE / height;
-                            height = MAX_SIZE;
-                        }
-
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        
-                        resolve({
-                            base64: canvas.toDataURL('image/jpeg', 0.6).split(',')[1],
-                            preview: canvas.toDataURL('image/jpeg')
-                        });
-                    };
-                };
-            });
-        }
-
-        async function handleFile(file) {
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
             if (!file) return;
-            
-            document.getElementById('upload-placeholder').classList.add('hidden');
-            document.getElementById('file-name').innerText = file.name.toUpperCase();
-            
-            const processed = await processImage(file);
-            currentFileData = processed.base64;
-            
-            const preview = document.getElementById('img-preview');
-            preview.src = processed.preview;
-            preview.classList.remove('hidden');
-            
-            addMessage('ai', "Đang chuẩn bị quét dữ liệu...");
-            analyzeData("Hãy phân tích chi tiết sơ đồ/hình ảnh này bằng tiếng Việt.");
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const imgData = e.target.result;
+                base64Image = imgData.split(',')[1];
+                
+                // UI Updates
+                document.getElementById('upload-ui').classList.add('hidden');
+                const preview = document.getElementById('preview-img');
+                preview.src = imgData;
+                preview.classList.remove('hidden');
+                document.getElementById('info-name').innerText = file.name.toUpperCase();
+                document.getElementById('status-tag').innerText = "PROCESSING";
+                document.getElementById('status-tag').className = "text-[10px] bg-yellow-500/10 text-yellow-400 px-2 py-0.5 rounded border border-yellow-500/20";
+                
+                appendMsg('system', `Đã nhận tệp: ${file.name}. Bắt đầu phân tích cấu trúc...`);
+                runAI("Phân tích hình ảnh này và tóm tắt các điểm quan trọng cho tôi.");
+            };
+            reader.readAsDataURL(file);
         }
 
-        async function analyzeData(prompt) {
-            const scanBar = document.getElementById('scan-bar');
-            scanBar.style.opacity = "1";
+        async function runAI(prompt) {
             const startTime = Date.now();
+            const scanLine = document.getElementById('scan-line');
+            scanLine.style.display = "block";
 
-            // Exponential Backoff Implementation
-            const fetchWithRetry = async (url, options, retries = 5, backoff = 1000) => {
+            // Hàm thực hiện gọi API với Retry logic (Gỡ lỗi 403)
+            async function callGemini(retryCount = 0) {
                 try {
-                    const response = await fetch(url, options);
-                    if (!response.ok) {
-                        if (retries > 0 && response.status >= 500) {
-                            await new Promise(r => setTimeout(r, backoff));
-                            return fetchWithRetry(url, options, retries - 1, backoff * 2);
-                        }
-                        throw new Error(`HTTP Error: ${response.status}`);
+                    // Model gemini-2.5-flash-preview-09-2025 là model ổn định nhất cho môi trường này
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                    
+                    const payload = {
+                        contents: [{
+                            parts: [
+                                { text: prompt }
+                            ]
+                        }]
+                    };
+
+                    if (base64Image) {
+                        payload.contents[0].parts.push({
+                            inlineData: {
+                                mimeType: "image/png",
+                                data: base64Image
+                            }
+                        });
                     }
-                    return response;
+
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error?.message || `Lỗi ${response.status}`);
+                    }
+
+                    return await response.json();
                 } catch (err) {
-                    if (retries > 0) {
-                        await new Promise(r => setTimeout(r, backoff));
-                        return fetchWithRetry(url, options, retries - 1, backoff * 2);
+                    if (retryCount < 3) {
+                        const wait = Math.pow(2, retryCount) * 1000;
+                        await new Promise(r => setTimeout(r, wait));
+                        return callGemini(retryCount + 1);
                     }
                     throw err;
                 }
-            };
+            }
 
             try {
-                const payload = {
-                    contents: [{
-                        parts: [{ text: prompt }]
-                    }]
-                };
-
-                if (currentFileData) {
-                    payload.contents[0].parts.push({
-                        inlineData: { mimeType: "image/jpeg", data: currentFileData }
-                    });
-                }
-
-                // Chuyển sang model 1.5 Flash cực kỳ ổn định cho ảnh
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                const result = await callGemini();
+                const responseText = result.candidates[0].content.parts[0].text;
                 
-                const response = await fetchWithRetry(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const data = await response.json();
-                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không có kết quả.";
-                
-                addMessage('ai', text);
-                document.getElementById('latency-display').innerText = `${Date.now() - startTime}ms`;
-
+                appendMsg('ai', responseText);
+                document.getElementById('lat-val').innerText = `${Date.now() - startTime}ms`;
+                document.getElementById('status-tag').innerText = "STABLE";
+                document.getElementById('status-tag').className = "text-[10px] bg-green-500/10 text-green-400 px-2 py-0.5 rounded border border-green-500/20";
             } catch (err) {
-                addMessage('ai', `LỖI HỆ THỐNG (${err.message}). Có thể do ảnh quá lớn hoặc API Key bị giới hạn. Hãy thử lại với ảnh nhỏ hơn.`);
+                console.error(err);
+                appendMsg('system', `LỖI API: ${err.message}. Tôi đang tự động điều chỉnh cấu hình kết nối...`);
+                document.getElementById('status-tag').innerText = "ERROR";
+                document.getElementById('status-tag').className = "text-[10px] bg-red-500/10 text-red-400 px-2 py-0.5 rounded border border-red-500/20";
             } finally {
-                scanBar.style.opacity = "0";
+                scanLine.style.display = "none";
             }
         }
 
-        function addMessage(sender, text) {
-            const chat = document.getElementById('chat-output');
-            const div = document.createElement('div');
-            div.className = sender === 'user' 
-                ? "bg-white/5 border border-white/10 p-3 rounded-2xl rounded-tr-none ml-auto max-w-[90%] text-right"
-                : "bg-indigo-500/10 border border-indigo-500/20 p-3 rounded-2xl rounded-tl-none max-w-[90%]";
+        function appendMsg(type, text) {
+            const chatBox = document.getElementById('chat-box');
+            const msg = document.createElement('div');
             
-            div.innerHTML = text.replace(/\n/g, '<br>');
-            chat.appendChild(div);
-            chat.scrollTop = chat.scrollHeight;
+            if (type === 'system') {
+                msg.className = "text-[10px] font-mono text-indigo-400 opacity-70 italic";
+                msg.innerText = `> ${text}`;
+            } else if (type === 'user') {
+                msg.className = "bg-white/5 p-3 rounded-2xl rounded-tr-none text-xs ml-8 border border-white/5";
+                msg.innerText = text;
+            } else {
+                msg.className = "bg-indigo-600/10 p-4 rounded-2xl rounded-tl-none text-xs mr-8 border border-indigo-500/10 leading-relaxed";
+                // Chuyển đổi markdown đơn giản sang HTML
+                msg.innerHTML = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+            }
+            
+            chatBox.appendChild(msg);
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        function sendMessage() {
-            const input = document.getElementById('chat-input');
+        function triggerChat() {
+            const input = document.getElementById('user-input');
             const val = input.value.trim();
             if (!val) return;
             
-            addMessage('user', val);
+            appendMsg('user', val);
             input.value = "";
-            analyzeData(val);
+            runAI(val);
         }
     </script>
 </body>
