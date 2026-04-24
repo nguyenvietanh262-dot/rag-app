@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Souly Vault V12.1 - Fix Unregistered Callers</title>
+    <title>Souly Vault V12.2 - Custom API Key</title>
     <style>
         :root {
             --bg: #0a0a0f;
@@ -30,8 +30,9 @@
             height: 100vh;
         }
 
+        /* Sidebar */
         .sidebar {
-            width: 280px;
+            width: 300px;
             background: var(--sidebar);
             border-right: 1px solid rgba(255,255,255,0.05);
             display: flex;
@@ -44,10 +45,37 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             font-weight: 800;
-            font-size: 20px;
+            font-size: 22px;
             color: var(--accent);
+        }
+
+        .section-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin: 15px 0 8px;
+            letter-spacing: 1px;
+        }
+
+        .key-input-group {
+            background: rgba(255,255,255,0.03);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .small-input {
+            width: 100%;
+            background: #000;
+            border: 1px solid #333;
+            color: var(--success);
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            box-sizing: border-box;
+            font-family: monospace;
         }
 
         .btn {
@@ -67,8 +95,10 @@
         }
 
         .btn:hover:not(:disabled) { background: var(--accent); }
+        .btn.primary { background: var(--accent); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+        /* Main Chat */
         .chat-area {
             flex: 1;
             display: flex;
@@ -86,16 +116,17 @@
         }
 
         .msg {
-            max-width: 80%;
+            max-width: 85%;
             padding: 15px 20px;
             border-radius: 18px;
-            line-height: 1.5;
+            line-height: 1.6;
             animation: fadeIn 0.3s ease;
+            word-wrap: break-word;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } }
 
-        .msg.ai { background: var(--card); align-self: flex-start; border: 1px solid rgba(255,255,255,0.05); }
+        .msg.ai { background: var(--card); align-self: flex-start; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .msg.user { background: var(--accent); align-self: flex-end; color: white; }
         .msg.system { 
             background: rgba(244, 63, 94, 0.1); 
@@ -104,17 +135,18 @@
             align-self: center; 
             font-size: 13px;
             text-align: center;
+            max-width: 90%;
         }
 
         .input-bar {
             padding: 20px 40px;
             display: flex;
             gap: 15px;
-            background: rgba(10,10,15,0.8);
-            backdrop-filter: blur(10px);
+            background: rgba(10,10,15,0.9);
+            border-top: 1px solid rgba(255,255,255,0.05);
         }
 
-        input {
+        .main-input {
             flex: 1;
             background: #1e1e2d;
             border: 1px solid rgba(255,255,255,0.1);
@@ -122,13 +154,16 @@
             border-radius: 12px;
             color: white;
             outline: none;
+            font-size: 15px;
         }
+
+        .main-input:focus { border-color: var(--accent); }
 
         .preview-box {
             width: 100%;
-            height: 140px;
+            max-height: 150px;
             border-radius: 8px;
-            margin-top: 15px;
+            margin-top: 10px;
             display: none;
             object-fit: cover;
             border: 2px solid var(--accent);
@@ -136,9 +171,11 @@
 
         .loader {
             display: none;
-            font-size: 12px;
-            color: var(--text-dim);
+            font-size: 13px;
+            color: var(--accent);
             padding: 0 40px 10px;
+            font-weight: bold;
+            font-style: italic;
         }
     </style>
 </head>
@@ -146,40 +183,47 @@
 
 <div class="app-container">
     <div class="sidebar">
-        <div class="brand"><span>⚡</span> SOULY V12.1</div>
+        <div class="brand"><span>⚡</span> SOULY V12.2</div>
         
-        <button class="btn" onclick="document.getElementById('file-in').click()">
-            <span>📷</span> Chọn ảnh phân tích
+        <div class="section-label">Cấu hình API cá nhân</div>
+        <div class="key-input-group">
+            <input type="password" id="customApiKey" class="small-input" placeholder="Dán Gemini API Key của bạn...">
+            <p style="font-size: 10px; color: var(--text-dim); margin-top: 5px;">* Key sẽ được ưu tiên sử dụng để tránh lỗi "Unregistered".</p>
+        </div>
+
+        <div class="section-label">Công cụ</div>
+        <button class="btn primary" onclick="document.getElementById('file-in').click()">
+            <span>📷</span> Tải ảnh lên
         </button>
         <input type="file" id="file-in" hidden accept="image/*" onchange="handleImage(this)">
         
         <img id="preview" class="preview-box">
 
-        <button class="btn" onclick="location.reload()" style="margin-top: auto; border-color: rgba(255,255,255,0.1);">
-            <span>🔄</span> Làm mới ứng dụng
+        <button class="btn" onclick="location.reload()" style="margin-top: auto;">
+            <span>🔄</span> Làm mới trang
         </button>
     </div>
 
     <div class="chat-area">
         <div id="messages">
             <div class="msg ai">
-                Chào bạn! Mình đã cập nhật cơ chế xác thực mới. <br>
-                Bây giờ bạn có thể gửi tin nhắn hoặc ảnh mà không lo bị lỗi "Unregistered callers" nữa nhé.
+                Chào bạn! Để tránh lỗi kết nối, bạn có thể <b>dán API Key cá nhân</b> của mình vào ô bên trái nhé. <br><br>
+                Nếu không có Key, mình vẫn sẽ thử sử dụng hệ thống mặc định. Hãy thử gửi tin nhắn hoặc ảnh ngay!
             </div>
         </div>
         
-        <div id="loader" class="loader">Souly đang xử lý dữ liệu...</div>
+        <div id="loader" class="loader">Souly đang suy nghĩ...</div>
 
         <div class="input-bar">
-            <input type="text" id="userInput" placeholder="Nhập câu hỏi tại đây..." onkeydown="if(event.key==='Enter') send()">
-            <button class="btn" id="sendBtn" onclick="send()" style="margin-bottom: 0; min-width: 100px;">GỬI</button>
+            <input type="text" id="userInput" class="main-input" placeholder="Nhập câu hỏi..." onkeydown="if(event.key==='Enter') send()">
+            <button class="btn primary" id="sendBtn" onclick="send()" style="margin-bottom: 0; padding: 0 25px;">GỬI</button>
         </div>
     </div>
 </div>
 
 <script>
-    // API Key được tự động truyền vào qua môi trường Canvas
-    const apiKey = ""; 
+    // Khóa API mặc định từ hệ thống (có thể bị trống nếu môi trường chặn)
+    const defaultApiKey = ""; 
     let base64Image = null;
     let isBusy = false;
 
@@ -202,53 +246,64 @@
             const p = document.getElementById('preview');
             p.src = e.target.result;
             p.style.display = 'block';
-            addMessage('ai', '<i>Đã nhận ảnh. Nhấn Gửi để mình phân tích nhé!</i>');
+            addMessage('ai', '<i>🖼️ Đã đính kèm ảnh. Bạn muốn mình làm gì với ảnh này?</i>');
         };
         reader.readAsDataURL(file);
     }
 
     async function send() {
         const input = document.getElementById('userInput');
+        const customKey = document.getElementById('customApiKey').value.trim();
         const text = input.value.trim();
         
-        if (isBusy || (!text && !base64Image)) return;
+        // Ưu tiên custom key của người dùng
+        const activeKey = customKey || defaultApiKey;
 
-        addMessage('user', text || "Phân tích hình ảnh này");
+        if (isBusy || (!text && !base64Image)) return;
+        
+        if (!activeKey) {
+            addMessage('system', "LỖI: Không tìm thấy API Key. Vui lòng dán Key của bạn vào ô bên trái.");
+            return;
+        }
+
+        addMessage('user', text || "Phân tích ảnh này");
         input.value = '';
         setLoading(true);
 
         const payload = {
             contents: [{
                 parts: [
-                    { text: text || "Hãy mô tả chi tiết hình ảnh này cho tôi." },
+                    { text: text || "Mô tả hình ảnh này một cách chi tiết." },
                     ...(base64Image ? [{ inlineData: { mimeType: "image/png", data: base64Image } }] : [])
                 ]
             }]
         };
 
         try {
-            // Sử dụng endpoint chuẩn với API Key
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${activeKey}`;
             
             const response = await fetchWithRetry(url, payload);
             const data = await response.json();
 
             if (!response.ok) {
+                if (data.error?.message?.includes("API key not valid")) {
+                    throw new Error("API Key bạn nhập không hợp lệ. Vui lòng kiểm tra lại.");
+                }
                 throw new Error(data.error?.message || "Lỗi API không xác định");
             }
 
-            const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "Mình không nhận được câu trả lời, hãy thử lại nhé.";
+            const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không có phản hồi từ AI.";
             addMessage('ai', aiResponse);
             
-            // Xóa ảnh sau khi gửi thành công để tránh gửi lặp
             if (base64Image) {
                 base64Image = null;
                 document.getElementById('preview').style.display = 'none';
+                document.getElementById('file-in').value = '';
             }
 
         } catch (err) {
             console.error(err);
-            addMessage('system', `<b>LỖI HỆ THỐNG:</b><br>${err.message}<br><small>Vui lòng kiểm tra kết nối mạng hoặc thử lại sau vài giây.</small>`);
+            addMessage('system', `<b>LỖI:</b> ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -262,7 +317,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                if (res.status === 429) { // Rate limit
+                if (res.status === 429) {
                     await new Promise(r => setTimeout(r, 2000 * (i + 1)));
                     continue;
                 }
