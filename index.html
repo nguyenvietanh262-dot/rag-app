@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Souly Vault V12.8 - History Saved</title>
+    <title>Souly Vault V12.9 - Debug Fixed</title>
     <style>
         :root {
             --bg: #0d0d12;
@@ -16,70 +16,37 @@
             --error: #ef4444;
         }
 
-        body, html {
-            margin: 0; padding: 0;
-            height: 100vh; width: 100vw;
-            background-color: var(--bg);
-            color: var(--text-main);
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            overflow: hidden;
-        }
+        body, html { margin: 0; padding: 0; height: 100vh; width: 100vw; background: var(--bg); color: var(--text-main); font-family: 'Inter', system-ui, sans-serif; overflow: hidden; }
 
-        .app-container {
-            display: flex;
-            height: 100vh;
-        }
+        .app-container { display: flex; height: 100vh; }
 
         .sidebar {
-            width: 300px;
+            width: 320px;
             background: var(--sidebar);
             border-right: 1px solid rgba(255,255,255,0.08);
+            padding: 24px;
             display: flex;
             flex-direction: column;
-            padding: 24px;
-            box-sizing: border-box;
             overflow-y: auto;
         }
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 32px;
-            font-weight: 700;
-            font-size: 20px;
-            color: var(--accent);
-            letter-spacing: -0.5px;
-        }
+        .brand { font-size: 22px; font-weight: 700; color: var(--accent); margin-bottom: 30px; }
 
         .section-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            margin: 20px 0 10px;
-            letter-spacing: 1.5px;
-            font-weight: 600;
+            font-size: 11px; text-transform: uppercase; color: var(--text-dim); margin: 20px 0 8px; letter-spacing: 1px;
         }
 
         .input-group, select {
-            background: rgba(0,0,0,0.2);
-            padding: 12px;
+            background: rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,255,255,0.06);
             border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.05);
-            margin-bottom: 20px;
+            padding: 12px;
+            margin-bottom: 18px;
             width: 100%;
-            color: var(--success);
-            font-family: 'JetBrains Mono', monospace;
         }
 
         .small-input {
-            width: 100%;
-            background: transparent;
-            border: none;
-            color: var(--success);
-            padding: 8px 0;
-            font-size: 13px;
-            outline: none;
+            width: 100%; background: transparent; border: none; color: var(--success); font-size: 14px; outline: none;
         }
 
         .btn {
@@ -90,96 +57,47 @@
             border-radius: 10px;
             cursor: pointer;
             width: 100%;
-            margin-bottom: 12px;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+            margin-bottom: 10px;
             font-size: 14px;
         }
 
-        .btn:hover:not(:disabled) {
-            border-color: var(--accent);
-            background: rgba(255,255,255,0.05);
-        }
+        .btn:hover:not(:disabled) { border-color: var(--accent); }
+        .btn.primary { background: var(--accent); border: none; font-weight: 600; }
 
-        .btn.primary {
-            background: var(--accent);
-            border: none;
-            font-weight: 600;
-        }
-
-        .btn.danger {
-            background: rgba(239, 68, 68, 0.15);
-            border-color: var(--error);
-            color: #fca5a5;
-        }
-
-        .chat-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: radial-gradient(circle at top right, rgba(139, 92, 246, 0.05), transparent);
-        }
+        .chat-area { flex: 1; display: flex; flex-direction: column; }
 
         #messages {
             flex: 1;
             overflow-y: auto;
-            padding: 40px;
+            padding: 30px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 18px;
         }
 
         .msg {
             max-width: 85%;
-            padding: 16px 20px;
+            padding: 14px 18px;
             border-radius: 16px;
-            line-height: 1.6;
+            line-height: 1.55;
             font-size: 15px;
-            word-wrap: break-word;
-            position: relative;
         }
 
-        .msg.ai {
-            background: var(--card);
-            align-self: flex-start;
-            border: 1px solid rgba(255,255,255,0.03);
-        }
+        .msg.ai { background: var(--card); align-self: flex-start; }
+        .msg.user { background: var(--accent); color: white; align-self: flex-end; }
+        .msg.system { background: rgba(239,68,68,0.15); border: 1px solid var(--error); color: #fca5a5; align-self: center; font-size: 13.5px; }
 
-        .msg.user {
-            background: var(--accent);
-            color: white;
-            align-self: flex-end;
-        }
+        .timestamp { font-size: 11px; opacity: 0.65; margin-top: 5px; }
 
-        .msg.system {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid var(--error);
-            color: #fca5a5;
-            align-self: center;
-            font-size: 13px;
-        }
-
-        .timestamp {
-            font-size: 11px;
-            opacity: 0.6;
-            margin-top: 6px;
-        }
-
-        .footer {
-            padding: 24px 40px;
-        }
+        .footer { padding: 20px 30px; background: var(--bg); }
 
         .input-container {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             background: var(--card);
-            padding: 8px 16px;
+            padding: 8px 14px;
             border-radius: 16px;
             border: 1px solid rgba(255,255,255,0.08);
-            align-items: center;
         }
 
         .main-input {
@@ -188,32 +106,25 @@
             border: none;
             padding: 12px;
             color: white;
+            font-size: 15.5px;
             outline: none;
-            font-size: 15px;
         }
 
         #preview-container {
             display: none;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             border: 2px solid var(--accent);
             border-radius: 12px;
             overflow: hidden;
             position: relative;
         }
 
-        #img-preview {
-            width: 100%;
-            display: block;
-        }
-
         .loader {
             display: none;
             text-align: center;
-            padding: 10px;
+            padding: 12px;
             color: var(--accent);
-            font-size: 12px;
             font-weight: bold;
-            letter-spacing: 1px;
         }
     </style>
 </head>
@@ -221,44 +132,43 @@
 
 <div class="app-container">
     <div class="sidebar">
-        <div class="brand">✨ SOULY V12.8</div>
-        
-        <div class="section-label">Cấu hình API</div>
+        <div class="brand">✨ SOULY V12.9</div>
+
+        <div class="section-label">Gemini API Key</div>
         <div class="input-group">
-            <input type="password" id="apiKey" class="small-input" placeholder="Nhập Gemini API Key...">
+            <input type="password" id="apiKey" class="small-input" placeholder="Dán API Key vào đây...">
         </div>
 
         <div class="section-label">Chọn Model</div>
         <select id="modelSelect" class="input-group">
-            <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite (Khuyến nghị)</option>
-            <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+            <option value="gemini-2.5-flash">gemini-2.5-flash (Khuyến nghị)</option>
+            <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
             <option value="gemini-flash-latest">gemini-flash-latest</option>
         </select>
 
-        <div class="section-label">Tệp tin</div>
+        <div class="section-label">Hình ảnh</div>
         <button class="btn" onclick="document.getElementById('file-input').click()">🖼️ Chọn hình ảnh</button>
         <input type="file" id="file-input" hidden accept="image/*" onchange="handleFile(this)">
-        
+
         <div id="preview-container">
-            <img id="img-preview" src="">
-            <button class="btn" style="position:absolute; bottom:5px; right:5px; width:auto; padding:5px 10px; margin:0; font-size:10px; background:rgba(0,0,0,0.7)" onclick="clearImage()">Xóa ảnh</button>
+            <img id="img-preview" src="" style="width:100%; display:block;">
+            <button class="btn" style="position:absolute; bottom:8px; right:8px; padding:6px 12px; font-size:12px;" onclick="clearImage()">Xóa</button>
         </div>
 
-        <div style="margin-top: auto;">
-            <button class="btn danger" onclick="clearHistory()">🗑️ Xóa toàn bộ lịch sử</button>
+        <div style="margin-top:auto;">
+            <button class="btn" onclick="clearHistory()">🗑️ Xóa lịch sử chat</button>
             <button class="btn" onclick="location.reload()">Làm mới trang</button>
         </div>
     </div>
 
     <div class="chat-area">
         <div id="messages"></div>
-        
-        <div id="loader" class="loader">ĐANG XỬ LÝ...</div>
+        <div id="loader" class="loader">ĐANG GỬI ĐẾN GEMINI...</div>
 
         <div class="footer">
             <div class="input-container">
-                <input type="text" id="userInput" class="main-input" placeholder="Hỏi tôi bất cứ điều gì..." onkeydown="if(event.key==='Enter') startGeneration()">
-                <button class="btn primary" id="sendBtn" onclick="startGeneration()" style="width: 80px; margin-bottom: 0;">Gửi</button>
+                <input type="text" id="userInput" class="main-input" placeholder="Nhập tin nhắn..." onkeydown="if(event.key==='Enter' && !isGenerating) startGeneration()">
+                <button class="btn primary" id="sendBtn" onclick="startGeneration()">Gửi</button>
             </div>
         </div>
     </div>
@@ -270,7 +180,7 @@
     let isGenerating = false;
     let chatHistory = [];
 
-    const STORAGE_KEY = "souly_chat_history";
+    const STORAGE_KEY = "souly_v12_history";
 
     function saveHistory() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory));
@@ -278,62 +188,50 @@
 
     function loadHistory() {
         const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-            chatHistory = JSON.parse(saved);
-            renderHistory();
-        }
+        if (saved) chatHistory = JSON.parse(saved);
+        renderHistory();
     }
 
     function renderHistory() {
         const container = document.getElementById('messages');
         container.innerHTML = '';
-        
-        chatHistory.forEach(msg => {
+        chatHistory.forEach(m => {
             const div = document.createElement('div');
-            div.className = `msg ${msg.role}`;
-            div.innerHTML = `
-                ${msg.text}
-                <div class="timestamp">${msg.time}</div>
-            `;
+            div.className = `msg ${m.role}`;
+            div.innerHTML = `${m.text}<div class="timestamp">${m.time}</div>`;
             container.appendChild(div);
         });
         container.scrollTop = container.scrollHeight;
     }
 
     function addMessage(role, text) {
-        const time = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-        
-        const msgObj = { role, text, time };
-        chatHistory.push(msgObj);
+        const time = new Date().toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'});
+        chatHistory.push({role, text, time});
         saveHistory();
 
         const div = document.createElement('div');
         div.className = `msg ${role}`;
-        div.innerHTML = `
-            ${text}
-            <div class="timestamp">${time}</div>
-        `;
+        div.innerHTML = `${text}<div class="timestamp">${time}</div>`;
         document.getElementById('messages').appendChild(div);
         document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
     }
 
     function clearHistory() {
-        if (confirm("Bạn có chắc muốn xóa toàn bộ lịch sử chat?")) {
+        if (confirm("Xóa toàn bộ lịch sử chat?")) {
             chatHistory = [];
             localStorage.removeItem(STORAGE_KEY);
             document.getElementById('messages').innerHTML = '';
-            addMessage('ai', 'Lịch sử đã được xóa. Chúng ta bắt đầu cuộc trò chuyện mới nhé!');
+            addMessage('ai', 'Lịch sử đã được xóa sạch.');
         }
     }
 
-    // Các hàm handleFile, clearImage, callGemini giữ nguyên như phiên bản trước
     function handleFile(input) {
         const file = input.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = e => {
             currentImageBase64 = e.target.result.split(',')[1];
-            currentMimeType = file.type || "image/jpeg";
+            currentMimeType = file.type || 'image/jpeg';
             document.getElementById('img-preview').src = e.target.result;
             document.getElementById('preview-container').style.display = 'block';
         };
@@ -347,5 +245,71 @@
         document.getElementById('file-input').value = '';
     }
 
-    async function callGemini(prompt, base64Data, mimeType, apiKey, modelName, retryCount = 0) {
-        const
+    async function callGemini(prompt, base64Data, mimeType, apiKey, modelName) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+        const parts = [{ text: prompt || "Mô tả chi tiết hình ảnh này bằng tiếng Việt." }];
+        if (base64Data) {
+            parts.push({ inlineData: { mimeType: mimeType, data: base64Data } });
+        }
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts }] })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw new Error(data.error?.message || `Lỗi ${res.status}`);
+        }
+        return data;
+    }
+
+    async function startGeneration() {
+        const text = document.getElementById('userInput').value.trim();
+        const apiKey = document.getElementById('apiKey').value.trim();
+        const modelName = document.getElementById('modelSelect').value;
+
+        if (isGenerating) return;
+        if (!apiKey) {
+            addMessage('system', 'Vui lòng nhập Gemini API Key trước khi gửi.');
+            return;
+        }
+        if (!text && !currentImageBase64) return;
+
+        // Thêm tin nhắn người dùng
+        addMessage('user', text || "[Đã gửi hình ảnh]");
+
+        document.getElementById('userInput').value = '';
+        isGenerating = true;
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('sendBtn').disabled = true;
+
+        try {
+            const data = await callGemini(text, currentImageBase64, currentMimeType, apiKey, modelName);
+            const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không nhận được phản hồi từ AI.";
+
+            addMessage('ai', responseText);
+            if (currentImageBase64) clearImage();
+        } catch (err) {
+            console.error(err);
+            addMessage('system', `LỖI: ${err.message}`);
+        } finally {
+            isGenerating = false;
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('sendBtn').disabled = false;
+        }
+    }
+
+    // Khởi động
+    window.onload = () => {
+        loadHistory();
+        if (chatHistory.length === 0) {
+            addMessage('ai', 'Souly V12.9 đã sẵn sàng.\nHãy dán API Key và chọn model bên trái, sau đó gửi tin nhắn thử nhé!');
+        }
+    };
+</script>
+</body>
+</html>
