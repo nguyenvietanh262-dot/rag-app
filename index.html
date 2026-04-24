@@ -235,10 +235,10 @@
     <div class="chat-area">
         <div id="messages">
             <div class="msg ai">
-                Chào bạn! Tôi đã sửa lỗi định danh model. <br><br>
-                Bản <b>V12.6</b> hiện đang sử dụng đúng model: <br>
-                <code>gemini-2.0-flash-preview-09-2025</code>. <br><br>
-                Hãy dán API Key và thử lại nhé!
+                Chào bạn! Tôi đã sửa lỗi model.<br><br>
+                Bản <b>V12.6 Fixed</b> hiện đang sử dụng model: <br>
+                <code>gemini-2.5-flash</code><br><br>
+                Hãy dán API Key và thử gửi tin nhắn hoặc hình ảnh nhé!
             </div>
         </div>
         
@@ -255,12 +255,12 @@
 
 <script>
     let currentImageBase64 = null;
+    let currentMimeType = null;
     let isGenerating = false;
 
     function addMessage(role, text) {
         const msgDiv = document.createElement('div');
         msgDiv.className = `msg ${role}`;
-        // Hỗ trợ hiển thị xuống dòng đơn giản
         msgDiv.innerText = text;
         msgDiv.style.whiteSpace = "pre-wrap";
         document.getElementById('messages').appendChild(msgDiv);
@@ -270,9 +270,13 @@
     function handleFile(input) {
         const file = input.files[0];
         if (!file) return;
+
         const reader = new FileReader();
         reader.onload = (e) => {
-            currentImageBase64 = e.target.result.split(',')[1];
+            const base64 = e.target.result.split(',')[1];
+            currentImageBase64 = base64;
+            currentMimeType = file.type; // tự động lấy mime type thật (image/jpeg, image/png...)
+            
             document.getElementById('img-preview').src = e.target.result;
             document.getElementById('preview-container').style.display = 'block';
         };
@@ -281,22 +285,30 @@
 
     function clearImage() {
         currentImageBase64 = null;
+        currentMimeType = null;
         document.getElementById('preview-container').style.display = 'none';
         document.getElementById('file-input').value = '';
     }
 
-    async function callGemini(prompt, base64Data, apiKey, retryCount = 0) {
-        // Tên model chính xác 100% cho version v1beta
-        const modelName = "gemini-2.0-flash-preview-09-2025";
+    async function callGemini(prompt, base64Data, mimeType, apiKey, retryCount = 0) {
+        // Model đang hoạt động tốt nhất hiện nay (tháng 4/2026)
+        const modelName = "gemini-2.5-flash";
+        
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
         
+        const parts = [{ text: prompt || "Hãy mô tả chi tiết hình ảnh này bằng tiếng Việt." }];
+        
+        if (base64Data && mimeType) {
+            parts.push({
+                inlineData: {
+                    mimeType: mimeType,
+                    data: base64Data
+                }
+            });
+        }
+
         const payload = {
-            contents: [{
-                parts: [
-                    { text: prompt || "Mô tả hình ảnh này" },
-                    ...(base64Data ? [{ inlineData: { mimeType: "image/png", data: base64Data } }] : [])
-                ]
-            }]
+            contents: [{ parts: parts }]
         };
 
         try {
@@ -309,12 +321,20 @@
             const result = await response.json();
 
             if (!response.ok) {
-                if ((response.status === 429 || response.status >= 500) && retryCount < 3) {
-                    const delay = Math.pow(2, retryCount) * 1500;
-                    await new Promise(r => setTimeout(r, delay));
-                    return callGemini(prompt, base64Data, apiKey, retryCount + 1);
+                const errorMsg = result.error?.message || `HTTP ${response.status}`;
+                
+                // Xử lý lỗi model không tồn tại
+                if (errorMsg.includes("not found") || errorMsg.includes("model")) {
+                    throw new Error(`Model "${modelName}" không tồn tại hoặc đã bị shutdown. Vui lòng thử lại sau hoặc liên hệ admin.`);
                 }
-                throw new Error(result.error?.message || "Lỗi không xác định");
+                
+                if ((response.status === 429 || response.status >= 500) && retryCount < 3) {
+                    const delay = Math.pow(2, retryCount) * 2000;
+                    await new Promise(r => setTimeout(r, delay));
+                    return callGemini(prompt, base64Data, mimeType, apiKey, retryCount + 1);
+                }
+                
+                throw new Error(errorMsg);
             }
 
             return result;
@@ -332,7 +352,7 @@
         if (isGenerating || (!text && !currentImageBase64)) return;
         
         if (!apiKey) {
-            addMessage('system', 'Lỗi: Vui lòng dán API Key vào ô cấu hình bên trái.');
+            addMessage('system', 'Lỗi: Vui lòng dán Gemini API Key vào ô bên trái.');
             return;
         }
 
@@ -343,17 +363,17 @@
         document.getElementById('sendBtn').disabled = true;
 
         try {
-            const data = await callGemini(text, currentImageBase64, apiKey);
+            const data = await callGemini(text, currentImageBase64, currentMimeType, apiKey);
             const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
             
             if (aiResponse) {
                 addMessage('ai', aiResponse);
                 if (currentImageBase64) clearImage();
             } else {
-                addMessage('system', 'AI không trả về nội dung. Có thể do chính sách an toàn.');
+                addMessage('system', 'AI không trả về nội dung. Có thể do chính sách an toàn của Google.');
             }
         } catch (err) {
-            addMessage('system', `LỖI KẾT NỐI: ${err.message}`);
+            addMessage('system', `LỖI: ${err.message}`);
             console.error(err);
         } finally {
             isGenerating = false;
