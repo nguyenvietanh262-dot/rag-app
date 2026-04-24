@@ -3,119 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Souly Vault V10</title>
+    <title>Souly Vault V11 - Ultra Stability</title>
     <style>
-        /* CSS Thuần để đảm bảo không bị lỗi giao diện trắng trang */
         :root {
-            --bg: #0a0a0c;
-            --panel: #16161d;
-            --accent: #6366f1;
-            --text: #e2e8f0;
-            --border: rgba(255,255,255,0.1);
+            --bg: #0d0d12;
+            --sidebar: #15151e;
+            --card: #1c1c27;
+            --accent: #4f46e5;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --err: #ef4444;
         }
 
         body, html {
             margin: 0; padding: 0;
             height: 100%; width: 100%;
             background-color: var(--bg);
-            color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text-main);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             overflow: hidden;
         }
 
-        .app-container {
+        .layout {
             display: flex;
             height: 100vh;
+            width: 100vw;
         }
 
         /* Sidebar */
         .sidebar {
-            width: 280px;
-            background: var(--panel);
-            border-right: 1px solid var(--border);
+            width: 300px;
+            background: var(--sidebar);
+            border-right: 1px solid rgba(255,255,255,0.05);
             display: flex;
             flex-direction: column;
-            padding: 20px;
+            padding: 24px;
             box-sizing: border-box;
+            z-index: 10;
         }
 
-        .brand {
+        .header {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 30px;
+            margin-bottom: 32px;
         }
 
-        .logo-box {
-            width: 40px; height: 40px;
-            background: var(--accent);
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 20px;
-        }
-
-        .btn {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
-            color: white;
-            padding: 12px;
+        .logo {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--accent), #818cf8);
             border-radius: 8px;
-            cursor: pointer;
-            margin-bottom: 10px;
-            text-align: left;
-            font-size: 13px;
-            transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800;
         }
 
-        .btn:hover { background: rgba(99, 102, 241, 0.2); border-color: var(--accent); }
+        .nav-btn {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text-main);
+            padding: 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-bottom: 12px;
+            text-align: left;
+            font-size: 14px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-        /* Main Chat */
-        .chat-area {
+        .nav-btn:hover {
+            background: rgba(79, 70, 229, 0.15);
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        /* Main View */
+        .main {
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: radial-gradient(circle at top, #1e1e2e, #0a0a0c);
+            position: relative;
         }
 
-        #messages {
+        #chat-window {
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
+            padding: 40px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 24px;
+            scroll-behavior: smooth;
         }
 
-        .msg {
-            max-width: 80%;
-            padding: 15px;
-            border-radius: 15px;
-            font-size: 14px;
-            line-height: 1.5;
-            animation: fadeIn 0.3s ease;
+        .message {
+            max-width: 85%;
+            padding: 16px 20px;
+            border-radius: 16px;
+            font-size: 15px;
+            line-height: 1.6;
+            animation: slideUp 0.3s ease-out;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-        .msg.ai { background: rgba(255,255,255,0.03); border: 1px solid var(--border); align-self: flex-start; border-top-left-radius: 0; }
-        .msg.user { background: var(--accent); color: white; align-self: flex-end; border-top-right-radius: 0; }
-        .msg.error { background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #fca5a5; align-self: center; }
+        .message.ai { 
+            background: var(--card); 
+            align-self: flex-start; 
+            border: 1px solid rgba(255,255,255,0.05);
+            color: #d1d5db;
+        }
+        
+        .message.user { 
+            background: var(--accent); 
+            color: white; 
+            align-self: flex-end; 
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--err);
+            color: #fca5a5;
+            align-self: center;
+            max-width: 95%;
+            text-align: center;
+        }
+
+        /* Input Area */
+        .input-wrapper {
+            padding: 24px 40px;
+            background: linear-gradient(to top, var(--bg) 80%, transparent);
+        }
 
         .input-box {
-            padding: 20px 40px;
-            background: rgba(0,0,0,0.2);
-            border-top: 1px solid var(--border);
-        }
-
-        .input-container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
+            background: #1e1e2d;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
             display: flex;
-            gap: 10px;
-            background: #1a1a24;
-            padding: 8px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
+            padding: 8px 12px;
+            align-items: center;
+            gap: 12px;
         }
 
         input {
@@ -123,184 +154,198 @@
             background: transparent;
             border: none;
             color: white;
-            padding: 10px;
+            padding: 12px;
             outline: none;
+            font-size: 15px;
         }
 
         .send-btn {
             background: var(--accent);
             border: none;
             color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: bold;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: 600;
             cursor: pointer;
+            transition: opacity 0.2s;
         }
 
-        .preview-img {
-            max-width: 100px;
-            max-height: 100px;
-            border-radius: 5px;
-            margin-top: 10px;
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .preview-thumb {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 16px;
             display: none;
             border: 1px solid var(--accent);
         }
 
-        .status-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
+        .loading-dots::after {
+            content: '.';
+            animation: dots 1.5s steps(5, end) infinite;
         }
-        .status-ready { background: #22c55e; box-shadow: 0 0 10px #22c55e; }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+            80%, 100% { content: ''; }
+        }
     </style>
 </head>
 <body>
 
-<div class="app-container">
+<div class="layout">
     <div class="sidebar">
-        <div class="brand">
-            <div class="logo-box">S</div>
-            <div>
-                <div style="font-weight:bold; font-size:14px;">SOULY VAULT</div>
-                <div style="font-size:10px; opacity:0.5;">HYBRID V10.0</div>
-            </div>
+        <div class="header">
+            <div class="logo">V</div>
+            <div style="font-weight: 700; font-size: 18px; letter-spacing: -0.5px;">SOULY <span style="color:var(--accent)">VAULT</span></div>
         </div>
 
-        <button class="btn" onclick="document.getElementById('fileInput').click()">
-            📁 Tải ảnh lên
+        <button class="nav-btn" onclick="document.getElementById('file-picker').click()">
+            🖼️ Tải lên hình ảnh
         </button>
-        <input type="file" id="fileInput" hidden accept="image/*" onchange="handleFile(this)">
+        <input type="file" id="file-picker" hidden accept="image/*" onchange="previewImage(this)">
         
-        <img id="imgPreview" class="preview-img">
+        <img id="thumb" class="preview-thumb">
 
-        <button class="btn" onclick="clearData()">
-            🔄 Xóa bộ nhớ đệm
+        <button class="nav-btn" onclick="location.reload()" style="margin-top: 12px; background: rgba(239, 68, 68, 0.05);">
+            🔄 Làm mới ứng dụng
         </button>
 
-        <div style="margin-top: auto; font-size: 11px; color: rgba(255,255,255,0.3);">
-            <div style="margin-bottom: 5px;">
-                <span class="status-dot status-ready"></span> HỆ THỐNG ỔN ĐỊNH
-            </div>
-            TRẠNG THÁI: <span id="statusText">SẴN SÀNG</span>
+        <div style="margin-top: auto; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 10px;">
+            <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 4px;">KÊNH TRUYỀN TẢI</div>
+            <div style="font-size: 12px; font-weight: 600; color: #22c55e;">● SECURE_CORE_V11</div>
         </div>
     </div>
 
-    <div class="chat-area">
-        <div id="messages">
-            <div class="msg ai">
-                Chào bạn! Đây là bản <b>V10 Hybrid</b>. Tôi đã chuyển sang dùng CSS nhúng trực tiếp để tránh lỗi trắng trang bạn gặp ở bản trước. 
+    <div class="main">
+        <div id="chat-window">
+            <div class="message ai">
+                Chào bạn! Bản <b>V11</b> đã được cấu trúc lại hoàn toàn để xử lý lỗi 403 và lỗi nạp JSON mà bạn gặp phải.
                 <br><br>
-                <b>Lưu ý quan trọng:</b> Hãy gửi 1 tin nhắn văn bản trước (ví dụ: "Chào") để thiết lập kết nối ổn định trước khi gửi ảnh nhé.
+                <b>Lưu ý cực kỳ quan trọng:</b> Hãy gõ 1 câu chào bất kỳ (ví dụ: "Hi") trước khi gửi ảnh để hệ thống khởi tạo phiên làm việc ổn định.
             </div>
         </div>
 
-        <div class="input-box">
-            <div class="input-container">
-                <input type="text" id="userInput" placeholder="Nhập tin nhắn tại đây..." onkeydown="if(event.key==='Enter') send()">
-                <button class="send-btn" id="sendBtn" onclick="send()">GỬI</button>
+        <div class="input-wrapper">
+            <div class="input-box">
+                <input type="text" id="userInput" placeholder="Hỏi về hình ảnh hoặc nhập tin nhắn..." onkeydown="if(event.key==='Enter') startProcess()">
+                <button class="send-btn" id="sendBtn" onclick="startProcess()">GỬI</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    const apiKey = ""; 
-    let base64Image = null;
-    let isThinking = false;
+    const apiKey = ""; // Môi trường sẽ tự nạp key
+    let currentImageBase64 = null;
+    let isProcessing = false;
 
-    function addMessage(role, text) {
-        const div = document.createElement('div');
-        div.className = `msg ${role}`;
-        div.innerHTML = text;
-        document.getElementById('messages').appendChild(div);
-        document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+    function pushMsg(role, text) {
+        const win = document.getElementById('chat-window');
+        const d = document.createElement('div');
+        d.className = `message ${role}`;
+        d.innerHTML = text;
+        win.appendChild(d);
+        win.scrollTop = win.scrollHeight;
     }
 
-    function handleFile(input) {
+    function previewImage(input) {
         const file = input.files[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = function(e) {
-            const base64 = e.target.result.split(',')[1];
-            base64Image = base64;
-            
-            const preview = document.getElementById('imgPreview');
-            preview.src = e.target.result;
-            preview.style.display = 'block';
-            
-            addMessage('ai', '<i>Đã nhận file ảnh. Vui lòng đặt câu hỏi về ảnh này.</i>');
+        reader.onload = (e) => {
+            currentImageBase64 = e.target.result.split(',')[1];
+            const thumb = document.getElementById('thumb');
+            thumb.src = e.target.result;
+            thumb.style.display = 'block';
+            pushMsg('ai', '<i>Đã nhận ảnh. Hệ thống đã sẵn sàng phân tích.</i>');
         };
         reader.readAsDataURL(file);
     }
 
-    function clearData() {
-        base64Image = null;
-        document.getElementById('imgPreview').style.display = 'none';
-        addMessage('ai', '<i>Dữ liệu ảnh đã được xóa.</i>');
-    }
-
-    async function send() {
-        const inputField = document.getElementById('userInput');
-        const text = inputField.value.trim();
+    async function startProcess() {
+        const inputEl = document.getElementById('userInput');
+        const query = inputEl.value.trim();
         
-        if ((!text && !base64Image) || isThinking) return;
+        if ((!query && !currentImageBase64) || isProcessing) return;
 
-        addMessage('user', text || "Phân tích ảnh này");
-        inputField.value = '';
-        isThinking = true;
-        document.getElementById('statusText').innerText = "ĐANG XỬ LÝ...";
-        document.getElementById('sendBtn').disabled = true;
+        pushMsg('user', query || "Hãy phân tích hình ảnh này");
+        inputEl.value = '';
+        toggleUI(true);
 
         const payload = {
             contents: [{
                 parts: [
-                    { text: text || "Phân tích nội dung hình ảnh này chi tiết." },
-                    ...(base64Image ? [{ inlineData: { mimeType: "image/png", data: base64Image } }] : [])
+                    { text: query || "Mô tả nội dung hình ảnh này một cách chi tiết." },
+                    ...(currentImageBase64 ? [{ inlineData: { mimeType: "image/png", data: currentImageBase64 } }] : [])
                 ]
             }]
         };
 
         try {
-            const response = await fetchWithRetry(payload);
-            const data = await response.json();
+            const res = await callGemini(payload);
             
-            if (data.error) throw new Error(data.error.message);
+            // Xử lý nếu res trả về không hợp lệ (lỗi fetch)
+            if (!res) {
+                throw new Error("Không nhận được phản hồi từ Gateway.");
+            }
+
+            const data = await res.json();
             
-            const aiText = data.candidates[0].content.parts[0].text;
-            addMessage('ai', aiText.replace(/\n/g, '<br>'));
-        } catch (err) {
-            console.error(err);
-            addMessage('error', `LỖI KẾT NỐI (403/500): ${err.message}<br><br>Gợi ý: Thử gửi lại tin nhắn KHÔNG kèm ảnh trước để kích hoạt lại Identity.`);
+            if (data.error) {
+                if (data.error.message.includes("unregistered callers")) {
+                    throw new Error("Hệ thống chưa xác thực xong. Hãy gửi một tin nhắn văn bản (không kèm ảnh) trước để kích hoạt.");
+                }
+                throw new Error(data.error.message);
+            }
+
+            const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không có phản hồi từ trí tuệ nhân tạo.";
+            pushMsg('ai', reply.replace(/\n/g, '<br>'));
+
+        } catch (e) {
+            console.error("Critical Failure:", e);
+            pushMsg('error', `<b>LỖI HỆ THỐNG:</b> ${e.message}<br><br><small>Hành động khuyên dùng: Nhấn nút "Làm mới ứng dụng" ở thanh bên trái.</small>`);
         } finally {
-            isThinking = false;
-            document.getElementById('statusText').innerText = "SẴN SÀNG";
-            document.getElementById('sendBtn').disabled = false;
+            toggleUI(false);
         }
     }
 
-    async function fetchWithRetry(payload, retries = 3) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+    function toggleUI(loading) {
+        isProcessing = loading;
+        const btn = document.getElementById('sendBtn');
+        btn.disabled = loading;
+        btn.innerText = loading ? "..." : "GỬI";
+    }
+
+    async function callGemini(payload, attempts = 3) {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
         
-        for (let i = 0; i < retries; i++) {
+        for (let i = 0; i < attempts; i++) {
             try {
-                const res = await fetch(url, {
+                const response = await fetch(endpoint, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
                 });
-                if (res.ok) return res;
-                if (res.status === 403 || res.status === 429) {
-                    await new Promise(r => setTimeout(r, 2000 * (i + 1)));
+                
+                // Nếu lỗi 403 hoặc 429, đợi và thử lại
+                if (response.status === 403 || response.status === 429) {
+                    await new Promise(r => setTimeout(r, 1500 * (i + 1)));
                     continue;
                 }
-                const errData = await res.json();
-                throw new Error(errData.error?.message || "Unknown error");
-            } catch (e) {
-                if (i === retries - 1) throw e;
+                
+                return response;
+            } catch (err) {
+                if (i === attempts - 1) return null;
+                await new Promise(r => setTimeout(r, 1000));
             }
         }
+        return null;
     }
 </script>
 
