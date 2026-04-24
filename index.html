@@ -3,269 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Souly Infinity Vault - Stable Core</title>
+    <title>Souly Vault V5 - Fix Nhập Liệu</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: #050507; color: #e2e8f0; font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; }
-        .glass { background: rgba(15, 15, 20, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); }
-        .neon-border { box-shadow: 0 0 15px rgba(99, 102, 241, 0.2); border-color: rgba(99, 102, 241, 0.4); }
-        @keyframes scan { 0% { top: 0%; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
-        .scan-line { position: absolute; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #6366f1, transparent); animation: scan 3s linear infinite; display: none; }
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 10px; }
+        body { background-color: #050507; color: #e2e8f0; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
+        .glass { background: rgba(15, 15, 20, 0.9); border: 1px solid rgba(255,255,255,0.08); }
+        /* Đảm bảo ô input luôn nằm trên cùng và có thể click */
+        #chat-input { 
+            position: relative !important; 
+            z-index: 999 !important; 
+            cursor: text !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        .message-stream { height: calc(100vh - 280px); }
+        .loading-line { height: 2px; width: 100%; background: #6366f1; position: absolute; top: 0; left: 0; display: none; }
+        .loading-line.active { display: block; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.2; } 50% { opacity: 1; } 100% { opacity: 0.2; } }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center p-4 md:p-8">
+<body class="flex flex-col h-full">
 
-    <!-- Header -->
-    <header class="w-full max-w-6xl flex justify-between items-center mb-8">
-        <div class="flex items-center gap-3">
-            <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                <i class="fas fa-brain text-white text-xl"></i>
-            </div>
-            <div>
-                <h1 class="text-2xl font-black tracking-tighter">SOULY <span class="text-indigo-500">VAULT</span></h1>
-                <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Core Engine v3.0 - Stable</span>
+    <!-- Top Navigation -->
+    <nav class="p-4 flex justify-between items-center border-b border-white/5">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center font-bold">S</div>
+            <span class="font-bold tracking-widest text-sm">SOULY VAULT <span class="text-indigo-500 underline">V5</span></span>
+        </div>
+        <div id="status" class="text-[10px] text-green-500 font-mono flex items-center gap-2">
+            <span class="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
+            STABLE_ENGINE_ACTIVE
+        </div>
+    </nav>
+
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden">
+        <!-- Media View (Left) -->
+        <div class="lg:col-span-4 border-r border-white/5 p-6 bg-black/20 flex flex-col items-center justify-center relative">
+            <div id="upload-box" class="w-full aspect-square glass rounded-2xl flex flex-col items-center justify-center border-dashed border-2 border-white/10 hover:border-indigo-500 transition-all cursor-pointer overflow-hidden relative">
+                <div id="prompt-ui" class="text-center">
+                    <i class="fas fa-file-import text-3xl text-gray-600 mb-4"></i>
+                    <p class="text-sm font-medium">Kéo thả hoặc Click để tải ảnh</p>
                 </div>
+                <img id="preview-img" class="hidden absolute inset-0 w-full h-full object-contain bg-black" src="">
+                <input type="file" id="file-hidden" class="hidden" accept="image/*">
+            </div>
+            <div class="mt-4 w-full space-y-2">
+                <button onclick="document.getElementById('file-hidden').click()" class="w-full py-2 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 text-xs rounded-lg transition-all">THAY ĐỔI DỮ LIỆU</button>
             </div>
         </div>
-        <div id="connection-status" class="hidden md:flex items-center gap-4 text-[10px] font-bold text-gray-400">
-            <span class="px-2 py-1 glass rounded-full border border-white/5"><i class="fas fa-microchip mr-1"></i> GPU_OK</span>
-            <span id="latency-val" class="px-2 py-1 glass rounded-full border border-white/5"><i class="fas fa-bolt mr-1 text-yellow-500"></i> 0MS</span>
-        </div>
-    </header>
 
-    <main class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <!-- Visualizer Area -->
-        <div class="lg:col-span-7 space-y-4">
-            <div id="drop-zone" class="glass rounded-[32px] aspect-video flex flex-col items-center justify-center relative overflow-hidden group cursor-pointer transition-all hover:border-indigo-500/40">
-                <div id="scan-line" class="scan-line"></div>
-                
-                <div id="placeholder" class="text-center p-8 transition-transform group-hover:scale-105">
-                    <div class="w-16 h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-indigo-500/20">
-                        <i class="fas fa-plus text-indigo-400"></i>
-                    </div>
-                    <p class="text-sm font-bold text-gray-300">Nạp dữ liệu hình ảnh</p>
-                    <p class="text-xs text-gray-500 mt-2">Kéo thả hoặc nhấp để chọn file phân tích</p>
-                </div>
-
-                <img id="preview-img" class="hidden absolute inset-0 w-full h-full object-contain p-4 z-10" src="" alt="Preview">
-                <input type="file" id="file-input" class="hidden" accept="image/*">
-            </div>
-
-            <div class="glass rounded-2xl p-4 flex items-center justify-between">
+        <!-- Chat Console (Right) -->
+        <div class="lg:col-span-8 flex flex-col relative">
+            <div id="loader" class="loading-line"></div>
+            
+            <div id="chat-window" class="message-stream overflow-y-auto p-6 space-y-6">
                 <div class="flex gap-4">
-                    <div class="text-[10px]">
-                        <p class="text-gray-500 uppercase font-bold">Trạng thái</p>
-                        <p id="status-text" class="text-indigo-400 font-mono italic">Awaiting Input...</p>
-                    </div>
-                </div>
-                <button onclick="clearAll()" class="text-xs text-gray-500 hover:text-red-400 transition-colors uppercase font-bold"><i class="fas fa-trash-alt mr-1"></i> Xóa phiên</button>
-            </div>
-        </div>
-
-        <!-- Chat Area -->
-        <div class="lg:col-span-5 flex flex-col h-[500px] lg:h-auto">
-            <div class="glass rounded-[32px] flex-1 flex flex-col overflow-hidden border-indigo-500/10">
-                <div class="p-4 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
-                    <span class="text-[10px] font-black uppercase tracking-widest text-gray-400"><i class="fas fa-terminal mr-2"></i> Neural Console</span>
-                    <i class="fas fa-circle text-[8px] text-indigo-500"></i>
-                </div>
-
-                <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scroll">
-                    <!-- Initial Message -->
-                    <div class="flex justify-start">
-                        <div class="max-w-[85%] bg-white/5 border border-white/10 p-3 rounded-2xl rounded-tl-none text-xs leading-relaxed">
-                            Chào mừng đến với hệ thống Souly Vault v3. Hãy tải ảnh lên để tôi thực hiện phân tích cấu trúc tri thức.
+                    <div class="w-8 h-8 rounded-full bg-indigo-600 flex-shrink-0 flex items-center justify-center text-[10px]">AI</div>
+                    <div class="space-y-1">
+                        <p class="text-[10px] text-gray-500 font-bold uppercase">System Assistant</p>
+                        <div class="text-sm bg-white/5 p-4 rounded-2xl rounded-tl-none leading-relaxed">
+                            Chào bạn! Tôi đã gỡ bỏ hoàn toàn các lớp bảo vệ gây lỗi nhập liệu. Bạn hãy thử gõ vào ô bên dưới ngay bây giờ.
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="p-4 bg-black/20">
-                    <div class="relative">
-                        <input type="text" id="user-input" 
-                            class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-4 pr-12 text-xs focus:outline-none focus:border-indigo-500/50 transition-all"
-                            placeholder="Hỏi về hình ảnh này...">
-                        <button id="send-btn" class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center hover:bg-indigo-500 transition-all text-white">
-                            <i class="fas fa-arrow-up"></i>
-                        </button>
-                    </div>
+            <!-- NHẬP LIỆU - PHẦN QUAN TRỌNG NHẤT -->
+            <div class="p-6 bg-black/60 border-t border-white/10">
+                <div class="relative flex items-center glass rounded-2xl p-2 shadow-2xl">
+                    <input type="text" id="chat-input" 
+                        class="w-full bg-transparent border-none py-4 px-6 text-white text-sm focus:ring-0 focus:outline-none"
+                        placeholder="Hãy thử nhập câu hỏi tại đây..."
+                        autocomplete="off">
+                    
+                    <button id="send-trigger" class="h-12 w-12 bg-indigo-600 hover:bg-indigo-500 rounded-xl flex items-center justify-center transition-all shadow-lg shadow-indigo-600/20">
+                        <i class="fas fa-arrow-up"></i>
+                    </button>
                 </div>
+                <p class="text-[10px] text-center text-gray-600 mt-4 font-mono tracking-tighter">
+                    CTRL + ENTER TO TRANSMIT // DIRECT_INPUT_MODE: ENABLED
+                </p>
             </div>
         </div>
     </main>
 
     <script>
-        const apiKey = ""; // Managed by environment
-        const modelName = "gemini-2.5-flash-preview-09-2025";
-        
-        let currentBase64 = null;
-        let isProcessing = false;
+        const apiKey = ""; // API Key tự động được nạp
+        const model = "gemini-2.5-flash-preview-09-2025";
+        let currentImgBase64 = null;
 
-        // Elements
-        const fileInput = document.getElementById('file-input');
-        const dropZone = document.getElementById('drop-zone');
+        const input = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-trigger');
+        const chatWindow = document.getElementById('chat-window');
+        const fileInput = document.getElementById('file-hidden');
         const previewImg = document.getElementById('preview-img');
-        const placeholder = document.getElementById('placeholder');
-        const chatBox = document.getElementById('chat-box');
-        const userInput = document.getElementById('user-input');
-        const sendBtn = document.getElementById('send-btn');
-        const statusText = document.getElementById('status-text');
-        const scanLine = document.getElementById('scan-line');
-        const latencyVal = document.getElementById('latency-val');
+        const promptUi = document.getElementById('prompt-ui');
+        const loader = document.getElementById('loader');
 
-        // Handle File
-        dropZone.onclick = () => fileInput.click();
-        
+        // Force focus on start
+        window.onload = () => input.focus();
+
         fileInput.onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            processImage(file);
-        };
-
-        function processImage(file) {
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = (ev) => {
                 const img = new Image();
                 img.onload = () => {
-                    // Resize image to max 1024px to prevent large payload errors
                     const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    const maxDim = 1024;
-                    
-                    if (width > height && width > maxDim) {
-                        height *= maxDim / width;
-                        width = maxDim;
-                    } else if (height > maxDim) {
-                        width *= maxDim / height;
-                        height = maxDim;
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    currentBase64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+                    let w = img.width, h = img.height;
+                    if(w > 1024) { h *= 1024/w; w = 1024; }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    currentImgBase64 = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
                     previewImg.src = canvas.toDataURL('image/jpeg');
                     previewImg.classList.remove('hidden');
-                    placeholder.classList.add('hidden');
-                    statusText.innerText = "Data Synced: READY";
-                    addMessage("Hệ thống", `Đã xử lý ảnh (${width}x${height}). Bạn muốn phân tích điều gì?`);
+                    promptUi.classList.add('hidden');
+                    input.focus();
                 };
-                img.src = e.target.result;
+                img.src = ev.target.result;
             };
             reader.readAsDataURL(file);
-        }
+        };
 
-        async function callGemini(prompt) {
-            if (isProcessing) return;
-            isProcessing = true;
-            statusText.innerText = "Neural Processing...";
-            scanLine.style.display = "block";
-            const startTime = Date.now();
+        async function handleSend() {
+            const text = input.value.trim();
+            if(!text) return;
+
+            addMsg("Bạn", text, true);
+            input.value = "";
+            loader.classList.add('active');
 
             const payload = {
-                contents: [{
-                    parts: [{ text: prompt }]
-                }]
+                contents: [{ parts: [{ text: text }] }]
             };
-
-            if (currentBase64) {
+            if(currentImgBase64) {
                 payload.contents[0].parts.push({
-                    inlineData: { mimeType: "image/jpeg", data: currentBase64 }
+                    inlineData: { mimeType: "image/jpeg", data: currentImgBase64 }
                 });
             }
 
-            // Exponential backoff retry logic
-            const maxRetries = 5;
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        const error = await response.json();
-                        throw new Error(error.error?.message || "Unknown error");
-                    }
-
-                    const data = await response.json();
-                    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không nhận được phản hồi.";
-                    
-                    addMessage("AI", text);
-                    latencyVal.innerHTML = `<i class="fas fa-bolt mr-1 text-yellow-500"></i> ${Date.now() - startTime}MS`;
-                    break;
-                } catch (err) {
-                    if (i === maxRetries - 1) {
-                        addMessage("System Error", `Lỗi: ${err.message}. Có thể do lỗi mạng hoặc xác thực. Hãy thử lại sau vài giây.`);
-                    } else {
-                        await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
-                    }
-                }
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không có phản hồi.";
+                addMsg("Souly AI", aiText);
+            } catch (e) {
+                addMsg("Lỗi", "Kết nối thất bại. Hãy kiểm tra lại mạng.");
+            } finally {
+                loader.classList.remove('active');
+                input.focus();
             }
-
-            isProcessing = false;
-            statusText.innerText = "System: STABLE";
-            scanLine.style.display = "none";
         }
 
-        function addMessage(sender, text) {
+        function addMsg(sender, text, isUser = false) {
             const div = document.createElement('div');
-            div.className = `flex ${sender === 'User' ? 'justify-end' : 'justify-start'}`;
-            const isError = sender === 'System Error';
-            
+            div.className = `flex gap-4 ${isUser ? 'flex-row-reverse' : ''}`;
             div.innerHTML = `
-                <div class="max-w-[85%] p-3 rounded-2xl text-xs leading-relaxed ${
-                    sender === 'User' ? 'bg-indigo-600 text-white rounded-tr-none' : 
-                    isError ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 
-                    'bg-white/5 border border-white/10 rounded-tl-none text-gray-300'
-                }">
-                    ${isError ? '<i class="fas fa-exclamation-triangle mr-1"></i>' : ''}
-                    ${text}
+                <div class="w-8 h-8 rounded-full ${isUser ? 'bg-indigo-500' : 'bg-white/10'} flex-shrink-0 flex items-center justify-center text-[10px] font-bold">${isUser ? 'U' : 'AI'}</div>
+                <div class="space-y-1 ${isUser ? 'text-right' : ''}">
+                    <p class="text-[10px] text-gray-500 font-bold uppercase">${sender}</p>
+                    <div class="text-sm ${isUser ? 'bg-indigo-600' : 'bg-white/5'} p-4 rounded-2xl ${isUser ? 'rounded-tr-none' : 'rounded-tl-none'} shadow-lg inline-block text-left">
+                        ${text}
+                    </div>
                 </div>
             `;
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        function handleSend() {
-            const val = userInput.value.trim();
-            if (!val || isProcessing) return;
-            
-            addMessage("User", val);
-            userInput.value = "";
-            callGemini(val);
+            chatWindow.appendChild(div);
+            chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
         }
 
         sendBtn.onclick = handleSend;
-        userInput.onkeypress = (e) => e.key === 'Enter' && handleSend();
-
-        function clearAll() {
-            currentBase64 = null;
-            previewImg.classList.add('hidden');
-            placeholder.classList.remove('hidden');
-            chatBox.innerHTML = '';
-            statusText.innerText = "Awaiting Input...";
-            addMessage("Hệ thống", "Dữ liệu đã được xóa sạch.");
-        }
-
-        // Drag & Drop
-        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('neon-border'); };
-        dropZone.ondragleave = () => dropZone.classList.remove('neon-border');
-        dropZone.ondrop = (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('neon-border');
-            const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) processImage(file);
-        };
+        input.onkeydown = (e) => { if(e.key === 'Enter') handleSend(); };
+        document.getElementById('upload-box').onclick = () => fileInput.click();
     </script>
 </body>
 </html>
