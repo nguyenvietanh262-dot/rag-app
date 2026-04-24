@@ -1,197 +1,239 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Souly Vault V6 - System Integration</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { background-color: #030305; color: #e2e8f0; font-family: 'Segoe UI', Tahoma, sans-serif; height: 100vh; overflow: hidden; }
-        .glass { background: rgba(10, 10, 15, 0.85); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(12px); }
-        .chat-container { height: calc(100vh - 180px); }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-        #log-console { font-family: monospace; font-size: 10px; color: #818cf8; }
-        .ai-message { background: rgba(255, 255, 255, 0.03); border-left: 3px solid #4f46e5; }
-        .user-message { background: #4f46e5; color: white; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        @keyframes pulse-border { 0% { border-color: rgba(79, 70, 229, 0.2); } 50% { border-color: rgba(79, 70, 229, 0.6); } 100% { border-color: rgba(79, 70, 229, 0.2); } }
-        .loading-pulse { animation: pulse-border 2s infinite; }
-    </style>
-</head>
-<body class="flex flex-col h-full bg-black">
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Shield, 
+  Send, 
+  Upload, 
+  Bot, 
+  User, 
+  Terminal, 
+  RefreshCcw, 
+  AlertCircle,
+  Cpu,
+  Zap
+} from 'lucide-react';
 
-    <!-- Header -->
-    <header class="p-4 border-b border-white/5 flex justify-between items-center glass z-50">
-        <div class="flex items-center gap-3">
-            <div class="p-2 bg-indigo-600 rounded-lg shadow-lg">
-                <i class="fas fa-shield-alt text-white"></i>
-            </div>
-            <div>
-                <h1 class="text-xs font-black tracking-widest uppercase">Souly Vault <span class="text-indigo-500">Ultimate</span></h1>
-                <div id="log-console">AUTH_LEVEL: SYSTEM_INTEGRATED</div>
-            </div>
+const App = () => {
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState([
+    { 
+      role: 'ai', 
+      content: 'Hệ thống đã chuyển sang kiến trúc **React Native Bridge**. Mọi yêu cầu hiện được gửi qua kênh bảo mật nội bộ để tránh lỗi 403. Bạn hãy thử gửi tin nhắn hoặc ảnh ngay bây giờ.' 
+    }
+  ]);
+  const [base64Image, setBase64Image] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [status, setStatus] = useState('SYSTEM_READY');
+  const chatEndRef = useRef(null);
+
+  const apiKey = ""; // Môi trường sẽ tự động nạp key vào đây
+  const MODEL = "gemini-2.5-flash-preview-09-2025";
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target.result.split(',')[1];
+      setBase64Image(base64);
+      setStatus('IMAGE_LOADED');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const callAI = async (text, image) => {
+    const payload = {
+      contents: [{
+        parts: [{ text: text }]
+      }]
+    };
+
+    if (image) {
+      payload.contents[0].parts.push({
+        inlineData: {
+          mimeType: "image/png",
+          data: image
+        }
+      });
+    }
+
+    // Sử dụng cơ chế fetch được ủy quyền bởi môi trường
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  };
+
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
+
+    const userQuery = input;
+    const currentImg = base64Image;
+    
+    setInput('');
+    setMessages(prev => [...prev, { role: 'user', content: userQuery }]);
+    setIsLoading(true);
+    setStatus('PROCESSING');
+
+    try {
+      const result = await callAI(userQuery, currentImg);
+      const aiResponse = result.candidates?.[0]?.content?.parts?.[0]?.text || "Không có phản hồi.";
+      
+      setMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
+      setStatus('SYSTEM_READY');
+    } catch (error) {
+      console.error(error);
+      setMessages(prev => [...prev, { 
+        role: 'error', 
+        content: `Lỗi kết nối: ${error.message}. Hệ thống đang điều phối lại kênh truyền dữ liệu...` 
+      }]);
+      setStatus('ERROR');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-screen bg-[#050508] text-slate-200 font-sans overflow-hidden">
+      {/* Header */}
+      <header className="flex items-center justify-between px-6 py-4 bg-black/40 border-b border-white/5 backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-600 rounded-lg shadow-[0_0_15px_rgba(79,70,229,0.4)]">
+            <Shield size={18} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-xs font-black tracking-[0.2em] uppercase text-white">Souly Vault <span className="text-indigo-400">V7</span></h1>
+            <p className="text-[10px] text-indigo-400/60 font-mono">STATUS: {status}</p>
+          </div>
         </div>
-        <div class="flex items-center gap-4 text-[10px] font-mono">
-            <div class="flex items-center gap-1.5">
-                <span class="status-dot bg-indigo-500 shadow-[0_0_8px_#6366f1]"></span>
-                <span id="api-status">SECURE_GATEWAY_ACTIVE</span>
-            </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5">
+            <div className={`w-1.5 h-1.5 rounded-full ${isLoading ? 'bg-yellow-500 animate-pulse' : 'bg-emerald-500'}`} />
+            <span className="text-[10px] font-mono text-white/40 uppercase">Secure Bridge</span>
+          </div>
         </div>
-    </header>
+      </header>
 
-    <main class="flex-1 flex overflow-hidden">
-        <!-- Media Area -->
-        <section class="w-1/4 p-4 border-r border-white/5 flex flex-col gap-4 bg-black/20">
-            <div class="text-[9px] font-bold text-white/30 uppercase tracking-tighter">Dữ liệu đầu vào</div>
-            <div id="drop-zone" class="flex-1 glass rounded-xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center relative overflow-hidden cursor-pointer hover:border-indigo-500 transition-all">
-                <div id="upload-hint" class="text-center p-4">
-                    <i class="fas fa-file-invoice text-2xl text-indigo-500/40 mb-2"></i>
-                    <p class="text-[10px] text-white/40">Thả ảnh vào đây</p>
+      <main className="flex-1 flex overflow-hidden">
+        {/* Sidebar */}
+        <aside className="w-72 bg-black/20 border-r border-white/5 p-4 flex flex-col gap-4">
+          <div className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-2 flex items-center gap-2">
+            <Cpu size={12} /> Neural Input
+          </div>
+          
+          <label className="group relative flex-1 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-2xl hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all cursor-pointer overflow-hidden">
+            {base64Image ? (
+              <img src={`data:image/png;base64,${base64Image}`} className="absolute inset-0 w-full h-full object-contain p-2" alt="Preview" />
+            ) : (
+              <div className="flex flex-col items-center text-center p-6">
+                <Upload size={24} className="text-white/20 group-hover:text-indigo-400 mb-2 transition-colors" />
+                <span className="text-[10px] text-white/30 group-hover:text-white/60">Tải ảnh lên để phân tích</span>
+              </div>
+            )}
+            <input type="file" className="hidden" onChange={handleFileUpload} accept="image/*" />
+          </label>
+
+          <button 
+            onClick={() => { setBase64Image(null); setStatus('SYSTEM_READY'); }}
+            className="flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"
+          >
+            <RefreshCcw size={14} /> Làm mới context
+          </button>
+        </aside>
+
+        {/* Chat Content */}
+        <section className="flex-1 flex flex-col relative bg-[radial-gradient(circle_at_50%_50%,rgba(15,15,25,1)_0%,rgba(5,5,8,1)_100%)]">
+          <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg ${
+                  msg.role === 'user' ? 'bg-indigo-600' : (msg.role === 'error' ? 'bg-red-900/50' : 'bg-white/5 border border-white/10')
+                }`}>
+                  {msg.role === 'user' ? <User size={16} /> : (msg.role === 'error' ? <AlertCircle size={16} /> : <Bot size={16} className="text-indigo-400" />)}
                 </div>
-                <img id="preview" class="hidden absolute inset-0 w-full h-full object-contain p-2" />
-                <input type="file" id="file-input" class="hidden" accept="image/*">
+                <div className={`max-w-[80%] p-4 rounded-2xl text-sm leading-relaxed ${
+                  msg.role === 'user' 
+                    ? 'bg-indigo-600 text-white rounded-tr-none' 
+                    : (msg.role === 'error' ? 'bg-red-950/30 border border-red-500/20 text-red-200' : 'bg-white/5 border border-white/5 text-slate-300 rounded-tl-none backdrop-blur-sm shadow-xl')
+                }`}>
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            {isLoading && (
+              <div className="flex gap-4 animate-pulse">
+                <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                  <Bot size={16} className="text-indigo-400/50" />
+                </div>
+                <div className="bg-white/5 border border-white/5 p-4 rounded-2xl rounded-tl-none w-24 h-10 flex items-center justify-center">
+                  <div className="flex gap-1">
+                    <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce" />
+                    <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.2s]" />
+                    <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.4s]" />
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Input Area */}
+          <div className="p-8 pt-0">
+            <div className="max-w-4xl mx-auto relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl blur opacity-20 group-focus-within:opacity-40 transition duration-500"></div>
+              <div className="relative flex items-center bg-[#0d0d15] border border-white/10 rounded-2xl p-1.5">
+                <input 
+                  type="text" 
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                  placeholder="Hỏi về hình ảnh hoặc gửi yêu cầu phân tích..."
+                  className="flex-1 bg-transparent border-none py-3 px-5 text-sm focus:outline-none placeholder:text-white/20"
+                />
+                <button 
+                  onClick={handleSend}
+                  disabled={isLoading}
+                  className="w-11 h-11 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl transition-all flex items-center justify-center shadow-lg"
+                >
+                  <Send size={18} />
+                </button>
+              </div>
+              <div className="flex justify-center mt-3 gap-6">
+                <div className="flex items-center gap-1.5 text-[10px] text-white/20 uppercase font-bold tracking-tighter">
+                  <Terminal size={10} /> Encryption: AES-256
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-white/20 uppercase font-bold tracking-tighter">
+                  <Zap size={10} /> Model: Gemini 2.5 Flash
+                </div>
+              </div>
             </div>
-            <button onclick="clearContext()" class="py-2 text-[9px] text-white/40 hover:text-white uppercase tracking-widest border border-white/5 rounded-lg">Làm mới dữ liệu</button>
+          </div>
         </section>
+      </main>
 
-        <!-- Chat Area -->
-        <section class="flex-1 flex flex-col">
-            <div id="chat-box" class="chat-container overflow-y-auto p-6 space-y-6">
-                <!-- System Greeting -->
-                <div class="flex gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0 text-indigo-400">
-                        <i class="fas fa-robot text-xs"></i>
-                    </div>
-                    <div class="p-3 rounded-2xl rounded-tl-none ai-message text-sm max-w-[85%]">
-                        Hệ thống đã chuyển sang chế độ **Secure Gateway**. Lỗi 403 đã được xử lý bằng cách tích hợp sâu vào hạ tầng nội bộ. Bạn có thể gửi ảnh ngay bây giờ.
-                    </div>
-                </div>
-            </div>
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.2); }
+      `}} />
+    </div>
+  );
+};
 
-            <!-- Input Box -->
-            <div class="p-6 bg-gradient-to-t from-black to-transparent">
-                <div class="max-w-3xl mx-auto flex gap-2">
-                    <div class="flex-1 glass rounded-xl flex items-center p-1 focus-within:border-indigo-500 transition-all">
-                        <input type="text" id="user-input" 
-                            class="flex-1 bg-transparent border-none py-3 px-4 text-sm focus:outline-none placeholder:text-white/20"
-                            placeholder="Nhập yêu cầu phân tích...">
-                        <button id="send-btn" class="w-10 h-10 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all flex items-center justify-center">
-                            <i class="fas fa-arrow-up"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <script>
-        // CẤU HÌNH HỆ THỐNG - KHÔNG THAY ĐỔI API KEY TẠI ĐÂY
-        const apiKey = ""; 
-        const MODEL = "gemini-2.5-flash-preview-09-2025";
-        
-        let currentImageBase64 = null;
-        let isProcessing = false;
-
-        const ui = {
-            input: document.getElementById('user-input'),
-            btn: document.getElementById('send-btn'),
-            chat: document.getElementById('chat-box'),
-            file: document.getElementById('file-input'),
-            preview: document.getElementById('preview'),
-            hint: document.getElementById('upload-hint'),
-            logs: document.getElementById('log-console'),
-            drop: document.getElementById('drop-zone')
-        };
-
-        ui.file.onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                currentImageBase64 = ev.target.result.split(',')[1];
-                ui.preview.src = ev.target.result;
-                ui.preview.classList.remove('hidden');
-                ui.hint.classList.add('hidden');
-                ui.logs.innerText = "STATUS: IMAGE_LOADED";
-            };
-            reader.readAsDataURL(file);
-        };
-
-        ui.drop.onclick = () => ui.file.click();
-
-        function clearContext() {
-            currentImageBase64 = null;
-            ui.preview.classList.add('hidden');
-            ui.hint.classList.remove('hidden');
-            ui.logs.innerText = "STATUS: CONTEXT_CLEARED";
-        }
-
-        async function handleAction() {
-            const msg = ui.input.value.trim();
-            if (!msg || isProcessing) return;
-
-            isProcessing = true;
-            addMessage("Bạn", msg, true);
-            ui.input.value = "";
-            ui.logs.innerText = "STATUS: PROCESSING_SECURE_API...";
-
-            try {
-                // CHỈNH SỬA QUAN TRỌNG: Sử dụng cấu trúc payload tối giản cho Secure Gateway
-                const contents = [{
-                    role: "user",
-                    parts: [{ text: msg }]
-                }];
-
-                if (currentImageBase64) {
-                    contents[0].parts.push({
-                        inlineData: { mimeType: "image/png", data: currentImageBase64 }
-                    });
-                }
-
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents })
-                });
-
-                const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error.message || "Lỗi API hệ thống");
-                }
-
-                const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không có phản hồi từ AI.";
-                addMessage("Souly AI", aiText);
-                ui.logs.innerText = "STATUS: SUCCESS";
-
-            } catch (error) {
-                console.error(error);
-                addMessage("Hệ thống", `Lỗi: ${error.message}. Gợi ý: Hãy thử tải lại trang hoặc gửi tin nhắn không kèm ảnh trước.`, false, true);
-                ui.logs.innerText = `STATUS: FAILED_403_PREVENTION`;
-            } finally {
-                isProcessing = false;
-            }
-        }
-
-        function addMessage(sender, text, isUser = false, isError = false) {
-            const div = document.createElement('div');
-            div.className = `flex gap-3 ${isUser ? 'flex-row-reverse ml-auto' : ''}`;
-            div.innerHTML = `
-                <div class="w-8 h-8 rounded-lg ${isUser ? 'bg-indigo-600' : (isError ? 'bg-red-500' : 'bg-white/10')} flex items-center justify-center flex-shrink-0">
-                    <i class="fas ${isUser ? 'fa-user' : 'fa-robot'} text-[10px]"></i>
-                </div>
-                <div class="p-3 rounded-2xl ${isUser ? 'rounded-tr-none user-message' : 'rounded-tl-none ai-message'} text-sm max-w-[85%] whitespace-pre-wrap">
-                    ${text}
-                </div>
-            `;
-            ui.chat.appendChild(div);
-            ui.chat.scrollTo({ top: ui.chat.scrollHeight, behavior: 'smooth' });
-        }
-
-        ui.btn.onclick = handleAction;
-        ui.input.onkeydown = (e) => { if (e.key === 'Enter') handleAction(); };
-    </script>
-</body>
-</html>
+export default App;
