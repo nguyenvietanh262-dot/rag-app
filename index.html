@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Souly RAG | Neural Engine</title>
+    <title>Neural Vision Engine | RAG</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -13,7 +13,7 @@
             --primary: #6366f1;
             --secondary: #a855f7;
             --accent: #22d3ee;
-            --bg: #030508;
+            --bg: #05070a;
         }
 
         body {
@@ -22,9 +22,10 @@
             color: #fff;
             margin: 0;
             overflow: hidden;
+            height: 100vh;
         }
 
-        #networkCanvas {
+        #neuralCanvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -33,251 +34,236 @@
         }
 
         .glass {
-            background: rgba(10, 15, 28, 0.7);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(13, 17, 28, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
-        .sidebar {
-            width: 350px;
-            z-index: 20;
+        .gradient-border {
+            position: relative;
+            border-radius: 2rem;
+        }
+        .gradient-border::after {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(168, 85, 247, 0.3));
+            z-index: -1;
+            border-radius: 2rem;
         }
 
-        .chat-container {
-            height: calc(100vh - 200px);
+        .chat-scroll::-webkit-scrollbar { width: 4px; }
+        .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
+
+        .typing-dot {
+            width: 4px; height: 4px; background: var(--primary);
+            border-radius: 50%; animation: blink 1.4s infinite both;
         }
+        @keyframes blink { 0%, 100% { opacity: 0.2; } 20% { opacity: 1; } }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 10px; }
-
-        .typing-indicator span {
-            animation: blink 1.4s infinite both;
-            height: 5px; width: 5px; background: var(--primary);
-            display: inline-block; border-radius: 50%; margin: 0 1px;
+        .scanline {
+            width: 100%; height: 2px;
+            background: rgba(99, 102, 241, 0.3);
+            position: absolute; top: 0; left: 0;
+            z-index: 5; pointer-events: none;
+            animation: scan 3s linear infinite;
         }
-        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes blink { 0% { opacity: 0.2; } 20% { opacity: 1; } 100% { opacity: 0.2; } }
+        @keyframes scan { from { top: 0; } to { top: 100%; } }
 
-        .node-active {
-            box-shadow: 0 0 30px rgba(99, 102, 241, 0.4);
-            border-color: var(--primary) !important;
-            transform: scale(1.05);
-        }
-
-        .gradient-text {
-            background: linear-gradient(135deg, #6366f1, #a855f7, #22d3ee);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .node-tag {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 99px;
+            color: #818cf8;
+            font-weight: 700;
+            text-transform: uppercase;
         }
     </style>
 </head>
 <body>
 
-    <canvas id="networkCanvas"></canvas>
+    <canvas id="neuralCanvas"></canvas>
 
-    <!-- Main Layout -->
-    <div class="relative z-10 flex h-screen w-full p-4 overflow-hidden gap-4">
+    <div class="relative z-10 flex h-screen p-6 gap-6 overflow-hidden">
         
-        <!-- Left: Knowledge Graph Info -->
-        <div class="flex-1 flex flex-col gap-4">
+        <!-- Left Section: Main Vision -->
+        <div class="flex-1 flex flex-col gap-6">
             <!-- Header -->
-            <header class="flex justify-between items-center glass p-6 rounded-[2rem]">
+            <div class="glass rounded-[2rem] p-6 flex justify-between items-center">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                        <i class="fas fa-brain text-xl"></i>
+                        <i class="fas fa-microchip text-xl text-white"></i>
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold tracking-tight">Souly <span class="gradient-text">Neural Engine</span></h1>
-                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Active Hybrid-RAG Interface</p>
+                        <h1 class="text-2xl font-bold tracking-tight">NEURAL <span class="text-indigo-400 font-black">VISION</span></h1>
+                        <p class="text-[10px] text-gray-400 font-bold tracking-[0.2em] uppercase">Visual Interaction System v2.5</p>
                     </div>
                 </div>
-                <div class="flex gap-2">
-                    <div class="glass px-4 py-2 rounded-xl text-[10px] flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span id="status-text">SYSTEM ONLINE</span>
+                <div class="flex gap-4">
+                    <div class="flex flex-col items-end">
+                        <span class="text-[10px] text-gray-500 font-bold uppercase">Processing Unit</span>
+                        <span class="text-xs font-mono text-emerald-400">GPU_ACCELERATED_OK</span>
+                    </div>
+                    <div class="w-[1px] h-10 bg-white/10"></div>
+                    <div class="flex flex-col items-end">
+                        <span class="text-[10px] text-gray-500 font-bold uppercase">Network Latency</span>
+                        <span class="text-xs font-mono text-indigo-400">12MS</span>
                     </div>
                 </div>
-            </header>
+            </div>
 
-            <!-- Visualizer Area -->
+            <!-- Image/Knowledge Visualization Area -->
             <div class="flex-1 relative flex items-center justify-center">
-                <div id="active-node-display" class="hidden glass p-8 rounded-[2.5rem] max-w-lg border-indigo-500/30 transition-all duration-500 animate-in fade-in zoom-in">
-                    <div class="flex items-start justify-between mb-6">
-                        <div class="flex gap-4">
-                            <div class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-indigo-400">
-                                <i class="fas fa-microchip text-2xl"></i>
+                <div id="vision-frame" class="relative group max-w-2xl w-full h-full flex items-center justify-center">
+                    <!-- Placeholder/Image Display -->
+                    <div id="image-display" class="w-full h-full glass rounded-[3rem] overflow-hidden flex items-center justify-center border-white/5 relative">
+                        <div id="empty-state" class="text-center space-y-4">
+                            <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <i class="fas fa-cloud-upload-alt text-3xl text-gray-600"></i>
+                            </div>
+                            <p class="text-gray-400 text-sm font-medium">Tải hình ảnh lên để nạp tri thức cho nơ-ron</p>
+                            <label class="inline-block px-6 py-3 bg-indigo-600 rounded-xl cursor-pointer hover:bg-indigo-500 transition-all font-bold text-sm shadow-lg shadow-indigo-500/20">
+                                <i class="fas fa-plus mr-2"></i> CHỌN ẢNH
+                                <input type="file" id="image-input" class="hidden" accept="image/*" onchange="handleImage(event)">
+                            </label>
+                        </div>
+                        <img id="preview-img" class="hidden w-full h-full object-cover opacity-60">
+                        <div id="scan-layer" class="hidden absolute inset-0">
+                            <div class="scanline"></div>
+                        </div>
+                    </div>
+
+                    <!-- Floating Node Info -->
+                    <div id="floating-node" class="absolute hidden top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 glass p-6 rounded-[2rem] w-80 border-indigo-500/30 animate-in zoom-in duration-500 z-50">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-400">
+                                <i class="fas fa-brain"></i>
                             </div>
                             <div>
-                                <h2 id="display-title" class="text-xl font-bold">Neural Chunk</h2>
-                                <p id="display-meta" class="text-xs text-gray-400">UID: hash_88291</p>
+                                <h3 id="node-title" class="text-sm font-bold uppercase tracking-wider">Object Detected</h3>
+                                <div class="node-tag">Vision Node</div>
                             </div>
                         </div>
-                        <button onclick="closeNode()" class="text-gray-500 hover:text-white"><i class="fas fa-times"></i></button>
-                    </div>
-                    <div class="space-y-4">
-                        <p id="display-content" class="text-sm text-gray-300 leading-relaxed italic">
-                            Chọn một hạt kiến thức trên màn hình hoặc hỏi AI để truy xuất dữ liệu...
-                        </p>
-                        <div class="pt-4 border-t border-white/5 flex gap-3">
-                            <span class="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-[10px] font-bold">VECTOR DB</span>
-                            <span id="display-score" class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold">0.99 MATCH</span>
+                        <p id="node-desc" class="text-xs text-gray-400 leading-relaxed italic mb-4">Analyzing visual features...</p>
+                        <div class="flex justify-between items-center pt-3 border-t border-white/5">
+                            <span class="text-[9px] text-indigo-400 font-bold">ACCURACY: 98.4%</span>
+                            <button onclick="closeNode()" class="text-gray-500 hover:text-white transition-colors"><i class="fas fa-times"></i></button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Library & Controls -->
-            <div class="glass p-6 rounded-[2rem] flex flex-col gap-4">
+            <!-- Knowledge Base Grid -->
+            <div class="glass rounded-[2rem] p-6 space-y-4">
                 <div class="flex justify-between items-center">
-                    <h3 class="text-xs font-bold uppercase text-gray-400">Knowledge Library</h3>
-                    <button onclick="toggleAddKnowledge()" class="text-indigo-400 text-xs hover:underline">+ Thêm tri thức</button>
+                    <span class="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">Live Knowledge Repository</span>
+                    <span class="text-[10px] text-indigo-400 font-bold italic">Active Synapses: <span id="synapse-count">0</span></span>
                 </div>
-                <div class="grid grid-cols-4 gap-3">
-                    <div class="p-3 rounded-xl bg-white/5 border border-white/5 hover:border-indigo-500/30 cursor-pointer transition-all group">
-                        <i class="fas fa-file-pdf text-red-400 mb-2"></i>
-                        <p class="text-[10px] font-bold truncate">Quy trình HR.pdf</p>
-                    </div>
-                    <div class="p-3 rounded-xl bg-white/5 border border-white/5 hover:border-indigo-500/30 cursor-pointer transition-all group">
-                        <i class="fas fa-database text-blue-400 mb-2"></i>
-                        <p class="text-[10px] font-bold truncate">Customer_DB.sql</p>
-                    </div>
-                    <div class="p-3 rounded-xl bg-white/5 border border-white/5 hover:border-indigo-500/30 cursor-pointer transition-all group">
-                        <i class="fas fa-globe text-emerald-400 mb-2"></i>
-                        <p class="text-[10px] font-bold truncate">Wiki_Scrape.txt</p>
-                    </div>
-                    <div class="p-3 rounded-xl bg-indigo-600/10 border border-indigo-500/30 flex items-center justify-center">
-                        <i class="fas fa-plus text-indigo-400"></i>
-                    </div>
+                <div id="knowledge-grid" class="grid grid-cols-4 gap-4 h-24">
+                    <div class="rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-gray-700 text-xs font-bold uppercase">Ready</div>
+                    <div class="rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-gray-700 text-xs font-bold uppercase">Ready</div>
+                    <div class="rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-gray-700 text-xs font-bold uppercase">Ready</div>
+                    <div class="rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-gray-700 text-xs font-bold uppercase">Ready</div>
                 </div>
             </div>
         </div>
 
-        <!-- Right: AI Chat Interface -->
-        <div class="sidebar flex flex-col gap-4 h-full">
+        <!-- Right Section: AI Interface -->
+        <div class="w-[400px] flex flex-col gap-6">
             <div class="flex-1 glass rounded-[2.5rem] flex flex-col overflow-hidden">
-                <div class="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-                    <span class="text-xs font-bold uppercase tracking-widest text-gray-400 italic">Conversational Layer</span>
-                    <i class="fas fa-bolt text-indigo-500"></i>
+                <div class="p-6 border-b border-white/5 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></div>
+                        <span class="text-xs font-bold uppercase tracking-widest text-gray-400">Neural Chat</span>
+                    </div>
+                    <button class="text-gray-500 hover:text-white"><i class="fas fa-history"></i></button>
                 </div>
 
-                <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-6">
-                    <div class="flex gap-3">
+                <div id="chat-messages" class="flex-1 p-6 space-y-6 overflow-y-auto chat-scroll">
+                    <div class="flex gap-4">
                         <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0">
-                            <i class="fas fa-robot text-xs"></i>
+                            <i class="fas fa-robot text-xs text-white"></i>
                         </div>
-                        <div class="text-sm text-gray-300 bg-white/5 p-4 rounded-2xl rounded-tl-none">
-                            Hệ thống đã sẵn sàng. Hãy thử hỏi tôi về dữ liệu của bạn, tôi sẽ truy xuất trực quan các hạt kiến thức liên quan.
+                        <div class="bg-white/5 p-4 rounded-2xl rounded-tl-none text-sm text-gray-300 leading-relaxed">
+                            Xin chào! Tôi là Neural Assistant. Hãy tải lên một hình ảnh hoặc sơ đồ, tôi sẽ phân tích và kết nối nó vào mạng lưới tri thức của bạn.
                         </div>
                     </div>
                 </div>
 
-                <div id="typing" class="px-6 py-2 hidden">
-                    <div class="typing-indicator"><span></span><span></span><span></span></div>
-                </div>
-
+                <!-- Input Area -->
                 <div class="p-6">
+                    <div id="ai-typing" class="hidden mb-4 flex gap-1">
+                        <div class="typing-dot" style="animation-delay: 0s"></div>
+                        <div class="typing-dot" style="animation-delay: 0.2s"></div>
+                        <div class="typing-dot" style="animation-delay: 0.4s"></div>
+                    </div>
                     <div class="relative">
-                        <textarea id="user-input" rows="1" placeholder="Hỏi AI..." 
-                                  class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-12 text-sm outline-none focus:border-indigo-500 transition-all resize-none"></textarea>
-                        <button onclick="sendMessage()" class="absolute right-2 bottom-2 w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center hover:scale-105 transition-all active:scale-95 shadow-lg shadow-indigo-500/20">
-                            <i class="fas fa-paper-plane text-xs"></i>
+                        <textarea id="chat-input" placeholder="Hỏi về hình ảnh..." rows="1" 
+                                  class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-14 text-sm outline-none focus:border-indigo-500/50 transition-all resize-none overflow-hidden"></textarea>
+                        <button onclick="sendChatMessage()" class="absolute right-2 bottom-2 w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-500/20">
+                            <i class="fas fa-paper-plane text-xs text-white"></i>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Stats -->
-            <div class="glass p-5 rounded-[1.5rem] grid grid-cols-2 gap-4">
-                <div class="text-center">
-                    <p class="text-[8px] text-gray-500 uppercase font-bold mb-1">Total Chunks</p>
-                    <p class="text-lg font-bold">12,401</p>
+            <!-- System Metrics -->
+            <div class="glass p-5 rounded-[2rem] grid grid-cols-2 gap-4">
+                <div class="bg-white/[0.02] p-4 rounded-2xl border border-white/5">
+                    <div class="text-[9px] text-gray-500 font-bold uppercase mb-1">Knowledge Growth</div>
+                    <div class="text-xl font-bold text-indigo-400">+12%</div>
                 </div>
-                <div class="text-center">
-                    <p class="text-[8px] text-gray-500 uppercase font-bold mb-1">Latency</p>
-                    <p class="text-lg font-bold text-emerald-400">14ms</p>
+                <div class="bg-white/[0.02] p-4 rounded-2xl border border-white/5">
+                    <div class="text-[9px] text-gray-500 font-bold uppercase mb-1">Vector Search</div>
+                    <div class="text-xl font-bold text-emerald-400">Fast</div>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal: Add Knowledge -->
-    <div id="modal-add" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="toggleAddKnowledge()"></div>
-        <div class="glass relative p-8 rounded-[2rem] w-full max-w-md animate-in zoom-in duration-300">
-            <h2 class="text-xl font-bold mb-4">Thêm tri thức mới</h2>
-            <div class="space-y-4">
-                <div>
-                    <label class="text-[10px] text-gray-400 font-bold uppercase mb-2 block">Tiêu đề</label>
-                    <input type="text" id="kn-title" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="text-[10px] text-gray-400 font-bold uppercase mb-2 block">Nội dung</label>
-                    <textarea id="kn-content" rows="4" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-indigo-500"></textarea>
-                </div>
-                <button onclick="saveKnowledge()" class="w-full bg-indigo-600 py-3 rounded-xl font-bold text-sm shadow-lg shadow-indigo-500/20 hover:bg-indigo-500 transition-all">Xác nhận nạp tri thức</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- GEMINI API CONFIG ---
-        const apiKey = ""; // Sẽ được hệ thống cung cấp tự động
-
-        // --- MOCK KNOWLEDGE BASE ---
-        let knowledgeBase = [
-            { id: 1, title: "Chiến lược Marketing 2024", content: "Tập trung vào AI-Driven Content, ngân sách dự kiến tăng 15% cho các kênh social media.", color: "#6366f1" },
-            { id: 2, title: "Thông tin Khách hàng", content: "Nhóm khách hàng mục tiêu là Gen Z, quan tâm đến các sản phẩm bền vững và bảo vệ môi trường.", color: "#a855f7" },
-            { id: 3, title: "Lỗi hệ thống Vector", content: "Cần tối ưu lại hàm Cosine Similarity để tăng tốc độ truy xuất từ 200ms xuống dưới 50ms.", color: "#22d3ee" }
-        ];
-
-        // --- CANVAS NEURAL ENGINE ---
-        const canvas = document.getElementById('networkCanvas');
+        const apiKey = ""; // API key được hệ thống cung cấp
+        const canvas = document.getElementById('neuralCanvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
-        const mouse = { x: null, y: null, radius: 150 };
+        const mouse = { x: null, y: null, radius: 200 };
+        let currentImageData = null;
 
-        window.addEventListener('mousemove', (e) => {
-            mouse.x = e.x;
-            mouse.y = e.y;
-        });
-
+        // Neural Particles System
         class Particle {
             constructor() {
-                this.reset();
+                this.init();
             }
-            reset() {
+            init() {
                 this.x = Math.random() * canvas.width;
                 this.y = Math.random() * canvas.height;
-                this.baseX = this.x;
-                this.baseY = this.y;
-                this.vx = (Math.random() - 0.5) * 0.5;
-                this.vy = (Math.random() - 0.5) * 0.5;
-                this.size = Math.random() * 2 + 1;
-                this.density = (Math.random() * 30) + 1;
-                this.color = Math.random() > 0.8 ? '#6366f1' : '#ffffff22';
+                this.vx = (Math.random() - 0.5) * 0.4;
+                this.vy = (Math.random() - 0.5) * 0.4;
+                this.size = Math.random() * 2 + 0.5;
+                this.color = Math.random() > 0.9 ? '#6366f1' : '#ffffff1a';
+                this.baseSize = this.size;
             }
             update() {
-                // Movement
                 this.x += this.vx;
                 this.y += this.vy;
                 if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
                 if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
 
-                // Mouse Interaction
-                let dx = mouse.x - this.x;
-                let dy = mouse.y - this.y;
-                let distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance < mouse.radius) {
-                    let forceDirectionX = dx / distance;
-                    let forceDirectionY = dy / distance;
-                    let force = (mouse.radius - distance) / mouse.radius;
-                    let directionX = forceDirectionX * force * this.density;
-                    let directionY = forceDirectionY * force * this.density;
-                    this.x += directionX;
-                    this.y += directionY;
+                // Mouse interaction
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < mouse.radius) {
+                    const force = (mouse.radius - dist) / mouse.radius;
+                    this.x -= dx * force * 0.05;
+                    this.y -= dy * force * 0.05;
+                    this.size = this.baseSize * 2;
+                } else {
+                    this.size = this.baseSize;
                 }
             }
             draw() {
@@ -288,201 +274,196 @@
             }
         }
 
-        function init() {
+        function initNetwork() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             particles = [];
-            for (let i = 0; i < 150; i++) {
-                particles.push(new Particle());
-            }
+            for (let i = 0; i < 180; i++) particles.push(new Particle());
         }
 
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (let i = 0; i < particles.length; i++) {
-                particles[i].update();
-                particles[i].draw();
-                
+            particles.forEach((p, i) => {
+                p.update();
+                p.draw();
                 for (let j = i + 1; j < particles.length; j++) {
-                    let dx = particles[i].x - particles[j].x;
-                    let dy = particles[i].y - particles[j].y;
-                    let distance = Math.sqrt(dx * dx + dy * dy);
-                    if (distance < 100) {
-                        ctx.strokeStyle = `rgba(99, 102, 241, ${1 - distance / 100})`;
+                    const dx = p.x - particles[j].x;
+                    const dy = p.y - particles[j].y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < 120) {
+                        ctx.strokeStyle = `rgba(99, 102, 241, ${0.1 * (1 - dist/120)})`;
                         ctx.lineWidth = 0.5;
                         ctx.beginPath();
-                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.moveTo(p.x, p.y);
                         ctx.lineTo(particles[j].x, particles[j].y);
                         ctx.stroke();
                     }
                 }
-            }
+            });
             requestAnimationFrame(animate);
         }
 
-        window.addEventListener('resize', init);
-        init();
-        animate();
+        window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
+        window.addEventListener('resize', initNetwork);
 
-        // --- APP LOGIC ---
+        // --- Logic Xử Lý Ảnh ---
+        async function handleImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-        function toggleAddKnowledge() {
-            document.getElementById('modal-add').classList.toggle('hidden');
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const base64 = e.target.result.split(',')[1];
+                currentImageData = base64;
+                
+                // UI Updates
+                document.getElementById('empty-state').classList.add('hidden');
+                document.getElementById('preview-img').src = e.target.result;
+                document.getElementById('preview-img').classList.remove('hidden');
+                document.getElementById('scan-layer').classList.remove('hidden');
+                
+                addChatMessage('ai', "Đang phân tích hình ảnh của bạn thông qua mạng lưới thần kinh...");
+                
+                await analyzeImage(base64);
+            };
+            reader.readAsDataURL(file);
         }
 
-        function saveKnowledge() {
-            const title = document.getElementById('kn-title').value;
-            const content = document.getElementById('kn-content').value;
-            if (!title || !content) return;
-
-            knowledgeBase.push({
-                id: Date.now(),
-                title: title,
-                content: content,
-                color: '#6366f1'
-            });
-
-            // Burst effect on canvas (add more particles)
-            for (let i = 0; i < 20; i++) {
-                let p = new Particle();
-                p.x = window.innerWidth / 2;
-                p.y = window.innerHeight / 2;
-                particles.push(p);
-            }
-
-            toggleAddKnowledge();
-            document.getElementById('kn-title').value = '';
-            document.getElementById('kn-content').value = '';
+        async function analyzeImage(base64) {
+            const prompt = "Hãy phân tích hình ảnh này và liệt kê 4 đặc điểm/đối tượng quan trọng nhất bạn thấy dưới dạng JSON. " +
+                           "Mỗi đặc điểm có: 'title' (tên ngắn), 'description' (mô tả cực ngắn), 'relevance' (độ quan trọng 0-1).";
             
-            showSystemMessage(`Knowledge "${title}" ingested successfully.`);
-        }
-
-        async function sendMessage() {
-            const input = document.getElementById('user-input');
-            const chatMessages = document.getElementById('chat-messages');
-            const query = input.value.trim();
-            if (!query) return;
-
-            // Add User Message
-            addMessage('user', query);
-            input.value = '';
-            
-            // Show Typing
-            document.getElementById('typing').classList.remove('hidden');
-
             try {
-                // STEP 1: Simulate Vector Retrieval
-                const relevant = retrieveKnowledge(query);
+                const response = await callGeminiVision(prompt, base64);
+                const data = JSON.parse(response);
                 
-                // STEP 2: Highlight in UI
-                if (relevant) {
-                    showNodeInfo(relevant);
-                }
-
-                // STEP 3: Call Gemini API
-                const systemPrompt = `Bạn là một AI thông minh tích hợp hệ thống RAG. 
-                Dưới đây là mẩu kiến thức bạn truy xuất được từ cơ sở dữ liệu:
-                TIÊU ĐỀ: ${relevant ? relevant.title : "Không có"}
-                NỘI DUNG: ${relevant ? relevant.content : "Không tìm thấy kiến thức liên quan trực tiếp."}
+                document.getElementById('scan-layer').classList.add('hidden');
+                populateKnowledgeGrid(data);
+                showNodeInfo(data[0]); // Show info of the most relevant item
                 
-                Hãy trả lời câu hỏi của người dùng dựa trên kiến thức này. Nếu không liên quan, hãy trả lời theo kiến thức chung của bạn nhưng ưu tiên dữ liệu trên. 
-                Trả lời ngắn gọn, chuyên nghiệp, ngôn ngữ Tiếng Việt.`;
-
-                const response = await callGemini(query, systemPrompt);
-                
-                document.getElementById('typing').classList.add('hidden');
-                addMessage('ai', response);
-            } catch (error) {
-                document.getElementById('typing').classList.add('hidden');
-                addMessage('ai', "Rất tiếc, đã có lỗi xảy ra trong quá trình truy xuất hệ thống.");
-                console.error(error);
+                addChatMessage('ai', "Phân tích hoàn tất. Tôi đã nạp các dữ liệu thu thập được vào hệ thống tri thức.");
+            } catch (err) {
+                console.error(err);
+                addChatMessage('ai', "Có lỗi khi phân tích ảnh. Vui lòng thử lại.");
             }
         }
 
-        function addMessage(role, text) {
-            const chatMessages = document.getElementById('chat-messages');
-            const div = document.createElement('div');
-            div.className = role === 'user' ? 'flex justify-end gap-3' : 'flex gap-3';
-            
-            const contentClass = role === 'user' 
-                ? 'bg-indigo-600/20 border border-indigo-500/20 p-4 rounded-2xl rounded-tr-none' 
-                : 'bg-white/5 p-4 rounded-2xl rounded-tl-none';
-
-            div.innerHTML = `
-                ${role === 'ai' ? '<div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0"><i class="fas fa-robot text-xs"></i></div>' : ''}
-                <div class="text-sm text-gray-300 max-w-[85%] ${contentClass}">
-                    ${text}
-                </div>
-            `;
-            chatMessages.appendChild(div);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+        function populateKnowledgeGrid(data) {
+            const grid = document.getElementById('knowledge-grid');
+            grid.innerHTML = '';
+            data.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = "bg-indigo-600/10 border border-indigo-500/20 rounded-2xl p-3 flex flex-col justify-center cursor-pointer hover:bg-indigo-500/20 transition-all";
+                card.onclick = () => showNodeInfo(item);
+                card.innerHTML = `
+                    <div class="text-[8px] text-indigo-400 font-bold uppercase mb-1">NODE_${index+1}</div>
+                    <div class="text-[10px] font-bold truncate">${item.title}</div>
+                    <div class="w-full h-1 bg-white/5 rounded-full mt-2 overflow-hidden">
+                        <div class="h-full bg-indigo-500" style="width: ${item.relevance * 100}%"></div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            document.getElementById('synapse-count').innerText = data.length * 42;
         }
 
-        function retrieveKnowledge(query) {
-            // Simple mock vector search using keyword matching
-            const q = query.toLowerCase();
-            return knowledgeBase.find(k => 
-                q.includes(k.title.toLowerCase()) || 
-                k.content.toLowerCase().split(' ').some(word => q.includes(word))
-            ) || null;
-        }
-
-        function showNodeInfo(node) {
-            const display = document.getElementById('active-node-display');
-            display.classList.remove('hidden');
-            document.getElementById('display-title').innerText = node.title;
-            document.getElementById('display-content').innerText = node.content;
-            document.getElementById('display-meta').innerText = `NODE_ID: ${node.id}`;
-            document.getElementById('display-score').innerText = `${(0.9 + Math.random() * 0.09).toFixed(4)} MATCH`;
+        function showNodeInfo(item) {
+            const node = document.getElementById('floating-node');
+            node.classList.remove('hidden');
+            document.getElementById('node-title').innerText = item.title;
+            document.getElementById('node-desc').innerText = item.description;
         }
 
         function closeNode() {
-            document.getElementById('active-node-display').classList.add('hidden');
+            document.getElementById('floating-node').classList.add('hidden');
         }
 
-        function showSystemMessage(msg) {
-            const status = document.getElementById('status-text');
-            const old = status.innerText;
-            status.innerText = msg;
-            status.parentElement.classList.add('bg-indigo-500/20');
-            setTimeout(() => {
-                status.innerText = old;
-                status.parentElement.classList.remove('bg-indigo-500/20');
-            }, 3000);
-        }
+        // --- Chat Logic ---
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
 
-        // --- API INTEGRATION ---
-        async function callGemini(prompt, system) {
-            let retries = 0;
-            const maxRetries = 5;
-            
-            while (retries < maxRetries) {
-                try {
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: prompt }] }],
-                            systemInstruction: { parts: [{ text: system }] }
-                        })
-                    });
-                    const data = await response.json();
-                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "Không nhận được phản hồi.";
-                } catch (e) {
-                    retries++;
-                    await new Promise(r => setTimeout(r, Math.pow(2, retries) * 1000));
+            addChatMessage('user', text);
+            input.value = '';
+            document.getElementById('ai-typing').classList.remove('hidden');
+
+            try {
+                let responseText;
+                if (currentImageData) {
+                    responseText = await callGeminiVision(text, currentImageData);
+                } else {
+                    responseText = await callGeminiText(text);
                 }
+                addChatMessage('ai', responseText);
+            } catch (err) {
+                addChatMessage('ai', "Lỗi kết nối bộ não AI.");
+            } finally {
+                document.getElementById('ai-typing').classList.add('hidden');
             }
-            throw new Error("API Failed");
         }
 
-        // Handle enter key
-        document.getElementById('user-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
+        function addChatMessage(role, text) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = `flex gap-4 ${role === 'user' ? 'flex-row-reverse' : ''}`;
+            
+            const contentClass = role === 'user' 
+                ? 'bg-indigo-600/20 border border-indigo-500/20 rounded-tr-none' 
+                : 'bg-white/5 rounded-tl-none';
+
+            div.innerHTML = `
+                <div class="w-8 h-8 rounded-lg ${role === 'user' ? 'bg-indigo-900' : 'bg-indigo-600'} flex items-center justify-center shrink-0">
+                    <i class="fas ${role === 'user' ? 'fa-user' : 'fa-robot'} text-xs text-white"></i>
+                </div>
+                <div class="${contentClass} p-4 rounded-2xl text-sm text-gray-300 leading-relaxed max-w-[80%]">
+                    ${text}
+                </div>
+            `;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // --- Gemini API Calls ---
+        async function callGeminiVision(prompt, base64) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{
+                    parts: [
+                        { text: prompt },
+                        { inlineData: { mimeType: "image/png", data: base64 } }
+                    ]
+                }]
+            };
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            let result = data.candidates[0].content.parts[0].text;
+            // Clean up JSON response if AI wraps it in markdown blocks
+            return result.replace(/```json|```/g, '').trim();
+        }
+
+        async function callGeminiText(prompt) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }]
+            };
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text;
+        }
+
+        // Start
+        initNetwork();
+        animate();
     </script>
 </body>
 </html>
