@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neural Vision Engine | RAG Enhanced</title>
+    <title>Neural Vision Engine | AI Vision Analyzer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -34,361 +34,279 @@
         }
 
         .glass {
-            background: rgba(13, 17, 28, 0.6);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            background: rgba(13, 17, 28, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .chat-scroll::-webkit-scrollbar { width: 4px; }
-        .chat-scroll::-webkit-scrollbar-track { background: transparent; }
-        .chat-scroll::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 10px; }
 
         .typing-dot {
-            width: 4px; height: 4px; background: var(--primary);
+            width: 5px; height: 5px; background: var(--primary);
             border-radius: 50%; animation: blink 1.4s infinite both;
         }
         @keyframes blink { 0%, 100% { opacity: 0.2; } 20% { opacity: 1; } }
 
         .scanline {
-            width: 100%; height: 2px;
-            background: rgba(99, 102, 241, 0.5);
+            width: 100%; height: 3px;
+            background: linear-gradient(to bottom, transparent, var(--primary), transparent);
             position: absolute; top: 0; left: 0;
             z-index: 5; pointer-events: none;
-            animation: scan 2.5s linear infinite;
-            box-shadow: 0 0 15px var(--primary);
+            animation: scan 3s linear infinite;
+            box-shadow: 0 0 20px var(--primary);
         }
-        @keyframes scan { from { top: 0; } to { top: 100%; } }
-
-        .node-tag {
-            background: rgba(99, 102, 241, 0.1);
-            border: 1px solid rgba(99, 102, 241, 0.2);
-            font-size: 0.65rem;
-            padding: 2px 8px;
-            border-radius: 99px;
-            color: #818cf8;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
+        @keyframes scan { from { top: -10%; } to { top: 110%; } }
 
         .error-toast {
             position: fixed;
-            bottom: 24px;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(239, 68, 68, 0.9);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 12px;
-            z-index: 100;
+            background: rgba(220, 38, 38, 0.95);
+            padding: 14px 28px;
+            border-radius: 16px;
+            z-index: 1000;
             display: none;
-            animation: slideUp 0.3s ease-out;
+            box-shadow: 0 10px 40px rgba(220, 38, 38, 0.3);
         }
-        @keyframes slideUp { from { transform: translate(-50%, 100%); } to { transform: translate(-50%, 0); } }
-
-        .scale-in { animation: scaleIn 0.3s ease-out forwards; }
-        @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
 
     <canvas id="neuralCanvas"></canvas>
-    <div id="error-toast" class="error-toast font-bold text-sm shadow-xl shadow-red-500/20"></div>
+    <div id="error-toast" class="error-toast font-bold text-sm"></div>
 
     <div class="relative z-10 flex h-screen p-6 gap-6 overflow-hidden">
         
-        <!-- Left Section: Main Vision -->
+        <!-- Left: AI Vision Workbench -->
         <div class="flex-1 flex flex-col gap-6">
-            <!-- Header -->
-            <div class="glass rounded-[2rem] p-6 flex justify-between items-center border-white/10">
+            <div class="glass rounded-[2rem] p-6 flex justify-between items-center">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                        <i class="fas fa-brain text-xl text-white"></i>
+                    <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center">
+                        <i class="fas fa-eye text-xl text-white"></i>
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold tracking-tight">NEURAL <span class="text-indigo-400">VISION</span></h1>
-                        <p class="text-[10px] text-gray-400 font-bold tracking-[0.2em] uppercase">Status: <span id="status-text" class="text-emerald-400">Online</span></p>
+                        <h1 class="text-2xl font-bold">VISION <span class="text-indigo-400">ENGINE</span></h1>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Trình phân tích thị giác AI</p>
                     </div>
                 </div>
-                <div class="flex gap-8">
-                    <div class="flex flex-col items-end">
-                        <span class="text-[10px] text-gray-500 font-bold uppercase">Model</span>
-                        <span class="text-xs font-mono text-indigo-400">Gemini 2.5 Flash</span>
-                    </div>
-                    <div class="flex flex-col items-end">
-                        <span class="text-[10px] text-gray-500 font-bold uppercase">Response Mode</span>
-                        <span class="text-xs font-mono text-emerald-400">Enter to Send</span>
-                    </div>
+                <div id="connection-status" class="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+                    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span class="text-[10px] font-bold text-emerald-400 uppercase">Sẵn sàng</span>
                 </div>
             </div>
 
-            <!-- Image Visualization Area -->
-            <div class="flex-1 relative flex items-center justify-center">
-                <div id="vision-frame" class="relative group max-w-3xl w-full h-full flex items-center justify-center">
-                    <div id="image-display" class="w-full h-full glass rounded-[3rem] overflow-hidden flex items-center justify-center border-white/5 relative">
-                        <div id="empty-state" class="text-center space-y-4">
-                            <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <i class="fas fa-upload text-3xl text-gray-600"></i>
-                            </div>
-                            <p class="text-gray-400 text-sm font-medium">Tải ảnh lên để phân tích đa chiều</p>
-                            <label class="inline-block px-8 py-3 bg-indigo-600 rounded-xl cursor-pointer hover:bg-indigo-500 transition-all font-bold text-sm shadow-lg shadow-indigo-500/20 active:scale-95">
-                                <i class="fas fa-plus mr-2"></i> CHỌN TỆP
-                                <input type="file" id="image-input" class="hidden" accept="image/*" onchange="handleImage(event)">
-                            </label>
-                        </div>
-                        <img id="preview-img" class="hidden w-full h-full object-contain p-4 opacity-80">
-                        <div id="scan-layer" class="hidden absolute inset-0">
-                            <div class="scanline"></div>
-                        </div>
+            <!-- Visualization Main View -->
+            <div class="flex-1 relative glass rounded-[3rem] overflow-hidden flex items-center justify-center border-white/5">
+                <div id="empty-state" class="text-center">
+                    <div class="w-24 h-24 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-indigo-400"></i>
                     </div>
+                    <h2 class="text-xl font-bold mb-2">Chưa có dữ liệu hình ảnh</h2>
+                    <p class="text-gray-500 text-sm mb-8">Hãy tải ảnh lên để AI bắt đầu phân tích đa chiều</p>
+                    <label class="px-8 py-4 bg-indigo-600 rounded-2xl cursor-pointer hover:bg-indigo-500 transition-all font-bold shadow-xl shadow-indigo-500/20 active:scale-95 inline-flex items-center gap-3">
+                        <i class="fas fa-plus"></i> CHỌN HÌNH ẢNH
+                        <input type="file" id="image-input" class="hidden" accept="image/*" onchange="handleImage(event)">
+                    </label>
+                </div>
+                
+                <img id="preview-img" class="hidden max-w-full max-h-full object-contain p-8">
+                <div id="scan-layer" class="hidden absolute inset-0"><div class="scanline"></div></div>
 
-                    <!-- Floating Node Info -->
-                    <div id="floating-node" class="absolute hidden top-10 right-10 glass p-6 rounded-[2rem] w-80 border-indigo-500/30 animate-in fade-in slide-in-from-right-4 duration-500 z-50">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-400">
-                                <i class="fas fa-microchip"></i>
-                            </div>
-                            <div>
-                                <h3 id="node-title" class="text-sm font-bold uppercase tracking-wider">Object</h3>
-                                <div class="node-tag">Analysis Result</div>
-                            </div>
-                        </div>
-                        <p id="node-desc" class="text-xs text-gray-400 leading-relaxed mb-4">Phân tích đặc điểm...</p>
-                        <button onclick="closeNode()" class="w-full py-2 bg-white/5 rounded-xl text-[10px] font-bold uppercase hover:bg-white/10 transition-all">Đóng bảng tin</button>
-                    </div>
+                <!-- Floating Analysis Card -->
+                <div id="floating-node" class="absolute hidden top-8 right-8 glass p-6 rounded-[2rem] w-80 border-indigo-500/30 scale-in z-50 shadow-2xl">
+                    <h3 id="node-title" class="text-sm font-bold uppercase text-indigo-400 mb-2">--</h3>
+                    <p id="node-desc" class="text-xs text-gray-300 leading-relaxed mb-6">--</p>
+                    <button onclick="closeNode()" class="w-full py-3 bg-white/5 rounded-xl text-[10px] font-bold uppercase hover:bg-white/10 transition-all">Đóng chi tiết</button>
                 </div>
             </div>
 
-            <!-- Knowledge Repository -->
-            <div class="glass rounded-[2rem] p-6 space-y-4 border-white/5">
-                <div class="flex justify-between items-center">
-                    <span class="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">Dữ liệu thu thập</span>
-                    <span class="text-[10px] text-indigo-400 font-bold italic">Nodes: <span id="node-count">0</span></span>
-                </div>
+            <!-- Knowledge Base Grid -->
+            <div class="glass rounded-[2rem] p-6 border-white/5">
+                <h4 class="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-4">Các thực thể phát hiện được</h4>
                 <div id="knowledge-grid" class="grid grid-cols-4 gap-4 h-24">
-                    <div class="rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-gray-800 text-[10px] font-bold uppercase">Chờ dữ liệu</div>
-                    <div class="rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-gray-800 text-[10px] font-bold uppercase">Chờ dữ liệu</div>
-                    <div class="rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-gray-800 text-[10px] font-bold uppercase">Chờ dữ liệu</div>
-                    <div class="rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-gray-800 text-[10px] font-bold uppercase">Chờ dữ liệu</div>
+                    <!-- Placeholder cards -->
+                    <div class="border border-white/5 rounded-2xl bg-white/[0.02]"></div>
+                    <div class="border border-white/5 rounded-2xl bg-white/[0.02]"></div>
+                    <div class="border border-white/5 rounded-2xl bg-white/[0.02]"></div>
+                    <div class="border border-white/5 rounded-2xl bg-white/[0.02]"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Section: Chat -->
+        <!-- Right: Control & Chat -->
         <div class="w-[420px] flex flex-col gap-6">
-            <div class="flex-1 glass rounded-[2.5rem] flex flex-col overflow-hidden border-white/5">
-                <div class="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-terminal text-indigo-500 text-xs"></i>
-                        <span class="text-xs font-bold uppercase tracking-widest text-gray-400">Hỗ trợ Phân tích</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div id="connection-dot" class="w-2 h-2 rounded-full bg-emerald-500"></div>
-                        <span class="text-[10px] text-gray-500 font-bold">STABLE</span>
-                    </div>
+            <div class="flex-1 glass rounded-[2.5rem] flex flex-col overflow-hidden">
+                <div class="p-6 border-b border-white/5 bg-white/[0.02] flex items-center gap-3">
+                    <i class="fas fa-comments text-indigo-500"></i>
+                    <span class="text-xs font-bold uppercase tracking-widest">Trợ lý Phân tích</span>
                 </div>
 
                 <div id="chat-messages" class="flex-1 p-6 space-y-6 overflow-y-auto chat-scroll">
                     <div class="flex gap-4">
-                        <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0">
                             <i class="fas fa-robot text-xs text-white"></i>
                         </div>
-                        <div class="bg-white/5 p-4 rounded-2xl rounded-tl-none text-sm text-gray-300 leading-relaxed border border-white/5">
-                            Hệ thống đã sẵn sàng. Tải ảnh lên và nhấn <kbd class="px-1.5 py-0.5 bg-white/10 rounded text-xs">Enter</kbd> để trao đổi nhanh.
+                        <div class="bg-white/5 p-4 rounded-2xl rounded-tl-none text-sm text-gray-300 leading-relaxed">
+                            Chào bạn! Tôi là Engine phân tích thị giác. Bạn có thể:<br>
+                            1. Tải một tấm ảnh bất kỳ lên.<br>
+                            2. Tôi sẽ trích xuất thông tin.<br>
+                            3. Nhấn <b>Enter</b> để hỏi tôi chi tiết về ảnh.
                         </div>
                     </div>
                 </div>
 
-                <div class="p-6 bg-white/[0.01]">
-                    <div id="ai-typing" class="hidden mb-4 flex gap-1 ml-12">
-                        <div class="typing-dot" style="animation-delay: 0s"></div>
+                <div class="p-6">
+                    <div id="ai-typing" class="hidden mb-3 flex gap-1 ml-12">
+                        <div class="typing-dot"></div>
                         <div class="typing-dot" style="animation-delay: 0.2s"></div>
                         <div class="typing-dot" style="animation-delay: 0.4s"></div>
                     </div>
                     <div class="relative">
-                        <textarea id="chat-input" placeholder="Hỏi tôi bất cứ điều gì... (Enter để gửi)" rows="1" 
-                                  class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-14 text-sm outline-none focus:border-indigo-500/50 transition-all resize-none overflow-hidden"
-                                  onkeydown="handleKeyDown(event)"></textarea>
-                        <button onclick="sendChatMessage()" class="absolute right-2 bottom-2 w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg shadow-indigo-500/20">
-                            <i class="fas fa-arrow-up text-xs text-white"></i>
+                        <textarea id="chat-input" placeholder="Hỏi về hình ảnh... (Enter để gửi)" 
+                                  class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-14 text-sm outline-none focus:border-indigo-500/50 transition-all resize-none max-h-32"
+                                  rows="1" onkeydown="handleKeyDown(event)"></textarea>
+                        <button onclick="sendChatMessage()" class="absolute right-2 bottom-2 w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
+                            <i class="fas fa-paper-plane text-xs text-white"></i>
                         </button>
                     </div>
-                    <p class="text-[9px] text-gray-600 mt-3 text-center uppercase font-bold tracking-widest">Shift + Enter để xuống dòng</p>
-                </div>
-            </div>
-
-            <!-- Footer Stats -->
-            <div class="glass p-5 rounded-[2rem] grid grid-cols-2 gap-4 border-white/5">
-                <div class="bg-white/[0.02] p-4 rounded-2xl border border-white/5">
-                    <div class="text-[9px] text-gray-500 font-bold uppercase mb-1">Xử lý Nơ-ron</div>
-                    <div id="latency-val" class="text-xl font-bold text-indigo-400">-- ms</div>
-                </div>
-                <div class="bg-white/[0.02] p-4 rounded-2xl border border-white/5">
-                    <div class="text-[9px] text-gray-500 font-bold uppercase mb-1">Độ tin cậy</div>
-                    <div class="text-xl font-bold text-emerald-400">99.2%</div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // Cấu hình môi trường (KHÔNG ĐƯỢC THAY ĐỔI apiKey)
         const apiKey = "";
+        let currentImageData = null;
+
+        // --- Canvas Background Logic ---
         const canvas = document.getElementById('neuralCanvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
-        let currentImageData = null;
 
-        class Particle {
-            constructor() { this.init(); }
-            init() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.vx = (Math.random() - 0.5) * 0.3;
-                this.vy = (Math.random() - 0.5) * 0.3;
-                this.size = Math.random() * 1.5 + 0.5;
-                this.color = Math.random() > 0.8 ? '#6366f1' : 'rgba(255,255,255,0.1)';
-            }
-            update() {
-                this.x += this.vx; this.y += this.vy;
-                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-            }
-            draw() {
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        function initNetwork() {
+        function initParticles() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            particles = Array.from({length: 150}, () => new Particle());
+            particles = Array.from({length: 100}, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5
+            }));
         }
 
         function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach((p, i) => {
-                p.update(); p.draw();
-                for (let j = i + 1; j < particles.length; j++) {
-                    const d = Math.hypot(p.x - particles[j].x, p.y - particles[j].y);
-                    if (d < 120) {
-                        ctx.strokeStyle = `rgba(99, 102, 241, ${0.15 * (1 - d/120)})`;
-                        ctx.lineWidth = 0.5;
-                        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke();
-                    }
-                }
+            ctx.clearRect(0,0,canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.x += p.vx; p.y += p.vy;
+                if(p.x<0 || p.x>canvas.width) p.vx*=-1;
+                if(p.y<0 || p.y>canvas.height) p.vy*=-1;
+                ctx.fillStyle = "rgba(99, 102, 241, 0.2)";
+                ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI*2); ctx.fill();
             });
             requestAnimationFrame(animate);
         }
 
-        async function fetchWithRetry(url, options, maxRetries = 5) {
-            let delay = 1000;
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    const response = await fetch(url, options);
-                    if (response.ok) return await response.json();
-                    if (response.status !== 429 && response.status < 500) throw new Error(`HTTP ${response.status}`);
-                } catch (err) {
-                    if (i === maxRetries - 1) throw err;
-                }
-                await new Promise(res => setTimeout(res, delay));
-                delay *= 2;
-            }
-        }
-
+        // --- Core Functions ---
         function showToast(msg) {
             const toast = document.getElementById('error-toast');
             toast.innerText = msg;
             toast.style.display = 'block';
-            setTimeout(() => toast.style.display = 'none', 4000);
+            setTimeout(() => toast.style.display = 'none', 5000);
         }
 
-        async function handleImage(event) {
-            const file = event.target.files[0];
+        async function apiCall(url, body) {
+            let retries = 5;
+            let delay = 1000;
+            while(retries > 0) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(body)
+                    });
+                    if (response.ok) return await response.json();
+                    if (response.status === 429) { /* Backoff */ }
+                    else throw new Error("API_ERROR");
+                } catch (e) {
+                    if (retries === 1) throw e;
+                }
+                await new Promise(r => setTimeout(r, delay));
+                delay *= 2;
+                retries--;
+            }
+        }
+
+        async function handleImage(e) {
+            const file = e.target.files[0];
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = async (e) => {
-                const base64 = e.target.result.split(',')[1];
+            reader.onload = async (event) => {
+                const base64 = event.target.result.split(',')[1];
                 currentImageData = base64;
                 
                 document.getElementById('empty-state').classList.add('hidden');
-                document.getElementById('preview-img').src = e.target.result;
+                document.getElementById('preview-img').src = event.target.result;
                 document.getElementById('preview-img').classList.remove('hidden');
                 document.getElementById('scan-layer').classList.remove('hidden');
-                document.getElementById('status-text').innerText = "Analyzing...";
-                document.getElementById('status-text').className = "text-yellow-400";
                 
-                addChatMessage('ai', "Hệ thống đang tiến hành quét cấu trúc hình ảnh...");
-                await performVisionAnalysis(base64);
+                addChatMessage('ai', "Đã nhận được dữ liệu hình ảnh. Bắt đầu phân tích cấu trúc...");
+                analyzeImage(base64);
             };
             reader.readAsDataURL(file);
         }
 
-        async function performVisionAnalysis(base64) {
-            const start = Date.now();
-            const prompt = `Phân tích ảnh và trả về JSON: [{"title": "tên", "description": "mô tả", "relevance": 0.9}]. Tối đa 4 node.`;
+        async function analyzeImage(base64) {
+            const prompt = "Phân tích ảnh này và trả về kết quả dưới dạng JSON (không cần markdown): [{\"title\": \"Vật thể\", \"description\": \"mô tả chi tiết\", \"relevance\": 0.9}]. Tối đa 4 vật thể quan trọng nhất.";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
             try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-                const result = await fetchWithRetry(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/png", data: base64 } }] }]
-                    })
+                const data = await apiCall(url, {
+                    contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/png", data: base64 } }] }]
                 });
 
-                const rawText = result.candidates[0].content.parts[0].text;
+                const rawText = data.candidates[0].content.parts[0].text;
                 const cleanJson = rawText.replace(/```json|```/g, '').trim();
-                const data = JSON.parse(cleanJson);
-
-                document.getElementById('latency-val').innerText = `${Date.now() - start}ms`;
-                document.getElementById('status-text').innerText = "Online";
-                document.getElementById('status-text').className = "text-emerald-400";
-                document.getElementById('scan-layer').classList.add('hidden');
+                const items = JSON.parse(cleanJson);
                 
-                updateKnowledgeUI(data);
-                addChatMessage('ai', "Quét dữ liệu hoàn tất. Các điểm truy cập thông tin đã được trích xuất vào kho lưu trữ.");
-
+                updateKnowledgeGrid(items);
+                document.getElementById('scan-layer').classList.add('hidden');
+                addChatMessage('ai', "Phân tích hoàn tất. Bạn có thể nhấn vào các thẻ dữ liệu bên dưới hoặc chat để hỏi thêm.");
             } catch (err) {
-                showToast("Lỗi phân tích hình ảnh.");
-                document.getElementById('status-text').innerText = "Offline";
-                addChatMessage('ai', "Không thể kết nối với trung tâm xử lý thị giác.");
+                showToast("Không thể kết nối với máy chủ AI. Vui lòng thử lại sau.");
+                document.getElementById('scan-layer').classList.add('hidden');
             }
         }
 
-        function updateKnowledgeUI(data) {
+        function updateKnowledgeGrid(items) {
             const grid = document.getElementById('knowledge-grid');
             grid.innerHTML = '';
-            data.forEach((item, idx) => {
+            items.forEach(item => {
                 const card = document.createElement('div');
-                card.className = "bg-indigo-600/10 border border-indigo-500/20 rounded-2xl p-3 flex flex-col justify-center cursor-pointer hover:bg-indigo-500/20 transition-all scale-in";
-                card.style.animationDelay = `${idx * 0.1}s`;
+                card.className = "bg-indigo-600/10 border border-indigo-500/20 rounded-2xl p-3 cursor-pointer hover:bg-indigo-600/20 transition-all";
                 card.onclick = () => {
                     document.getElementById('floating-node').classList.remove('hidden');
                     document.getElementById('node-title').innerText = item.title;
                     document.getElementById('node-desc').innerText = item.description;
                 };
                 card.innerHTML = `
-                    <div class="text-[8px] text-indigo-400 font-bold uppercase mb-1">DATA_STREAM_${idx+1}</div>
+                    <div class="text-[8px] text-indigo-400 font-bold mb-1 tracking-tighter">DETECTED_ENTITY</div>
                     <div class="text-[10px] font-bold truncate">${item.title}</div>
-                    <div class="w-full h-1 bg-white/5 rounded-full mt-2 overflow-hidden">
+                    <div class="mt-2 h-1 bg-white/5 rounded-full overflow-hidden">
                         <div class="h-full bg-indigo-500" style="width: ${item.relevance * 100}%"></div>
                     </div>
                 `;
                 grid.appendChild(card);
             });
-            document.getElementById('node-count').innerText = data.length;
         }
 
-        // --- Keyboard Handler ---
-        function handleKeyDown(event) {
-            // Check for Enter key without Shift key
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault(); // Prevent default newline
+        // --- Chat Interaction ---
+        function handleKeyDown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
                 sendChatMessage();
             }
         }
@@ -400,31 +318,20 @@
 
             addChatMessage('user', text);
             input.value = '';
-            input.style.height = 'auto'; // Reset height
+            input.style.height = 'auto';
             document.getElementById('ai-typing').classList.remove('hidden');
 
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const parts = [{ text: text }];
+            if (currentImageData) parts.push({ inlineData: { mimeType: "image/png", data: currentImageData } });
+
             try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-                const payload = {
-                    contents: [{
-                        parts: [
-                            { text: text },
-                            ...(currentImageData ? [{ inlineData: { mimeType: "image/png", data: currentImageData } }] : [])
-                        ]
-                    }]
-                };
-
-                const result = await fetchWithRetry(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const aiText = result.candidates[0].content.parts[0].text;
-                addChatMessage('ai', aiText);
+                const data = await apiCall(url, { contents: [{ parts }] });
+                const aiResponse = data.candidates[0].content.parts[0].text;
+                addChatMessage('ai', aiResponse);
             } catch (err) {
-                showToast("Lỗi truyền tin.");
-                addChatMessage('ai', "Tín hiệu bị ngắt quãng. Vui lòng kiểm tra lại đường truyền.");
+                showToast("Lỗi kết nối khi gửi tin nhắn.");
+                addChatMessage('ai', "Xin lỗi, tôi gặp sự cố khi xử lý dữ liệu. Bạn vui lòng gửi lại nhé.");
             } finally {
                 document.getElementById('ai-typing').classList.add('hidden');
             }
@@ -435,15 +342,11 @@
             const div = document.createElement('div');
             div.className = `flex gap-4 ${role === 'user' ? 'flex-row-reverse' : ''} animate-in fade-in slide-in-from-bottom-2`;
             
-            const contentClass = role === 'user' 
-                ? 'bg-indigo-600/20 border border-indigo-500/20 rounded-tr-none' 
-                : 'bg-white/5 border border-white/5 rounded-tl-none';
-
             div.innerHTML = `
                 <div class="w-8 h-8 rounded-lg ${role === 'user' ? 'bg-indigo-900' : 'bg-indigo-600'} flex items-center justify-center shrink-0">
                     <i class="fas ${role === 'user' ? 'fa-user' : 'fa-robot'} text-[10px] text-white"></i>
                 </div>
-                <div class="${contentClass} p-4 rounded-2xl text-sm text-gray-300 leading-relaxed max-w-[85%] whitespace-pre-wrap">
+                <div class="${role === 'user' ? 'bg-indigo-600/20' : 'bg-white/5'} p-4 rounded-2xl text-sm text-gray-300 leading-relaxed max-w-[85%] whitespace-pre-wrap">
                     ${text}
                 </div>
             `;
@@ -453,18 +356,14 @@
 
         function closeNode() { document.getElementById('floating-node').classList.add('hidden'); }
 
-        // Auto-resize textarea
-        const textarea = document.getElementById('chat-input');
-        textarea.addEventListener('input', function() {
+        // Textarea auto-height
+        document.getElementById('chat-input').addEventListener('input', function() {
             this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
+            this.style.height = this.scrollHeight + 'px';
         });
 
-        window.addEventListener('resize', initNetwork);
-        window.onload = () => {
-            initNetwork();
-            animate();
-        };
+        window.onload = () => { initParticles(); animate(); };
+        window.onresize = initParticles;
     </script>
 </body>
 </html>
