@@ -2,10 +2,367 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Souly Infinity Vault</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Souly RAG | Visual Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --bg-dark: #05070a;
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --accent: #22d3ee;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--bg-dark);
+            color: #fff;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* Hiệu ứng nền nhiễu hạt */
+        .noise-bg {
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Canvas cho mạng lưới nơ-ron */
+        #networkCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+        }
+
+        .node-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+        .node-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .chat-input {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.07);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+        }
+
+        .glow-text {
+            text-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+        }
+
+        /* Animation cho các nút kiến thức */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .floating {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .pulse-border {
+            position: relative;
+        }
+        .pulse-border::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: inherit;
+            border: 2px solid var(--primary);
+            opacity: 0;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.5; }
+            100% { transform: scale(1.1); opacity: 0; }
+        }
+    </style>
 </head>
 <body>
-    <h1>Souly đã sẵn sàng!</h1>
-    <p>Trang web này được tải lên thủ công qua giao diện GitHub.</p>
+
+    <div class="noise-bg"></div>
+    <canvas id="networkCanvas"></canvas>
+
+    <!-- UI Overlay -->
+    <div class="relative z-10 h-screen flex flex-col md:flex-row p-4 md:p-8 gap-6">
+        
+        <!-- Left Section: Visual Clusters & Docs -->
+        <div class="flex-1 flex flex-col gap-6">
+            <header class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold tracking-tighter glow-text">NEURAL <span class="text-indigo-500">RAG</span></h1>
+                    <p class="text-xs text-gray-500 font-medium uppercase tracking-[0.2em]">Hệ thống tri thức trực quan v2.0</p>
+                </div>
+                <div class="flex gap-3">
+                    <button class="glass-panel px-4 py-2 rounded-full text-xs font-semibold hover:bg-white/10 transition-all flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Nạp kiến thức
+                    </button>
+                    <button class="glass-panel w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-all">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Knowledge Map Status -->
+            <div class="flex-1 relative overflow-hidden flex items-center justify-center">
+                <!-- Đây là nơi Canvas vẽ, chúng ta chỉ để trống hoặc thêm label -->
+                <div class="absolute top-4 left-4 glass-panel p-4 rounded-2xl max-w-xs">
+                    <h3 class="text-sm font-bold mb-2">Đang phân tích cụm: <span class="text-indigo-400">Marketing_Strategy</span></h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-[10px]">
+                            <span class="text-gray-400">Độ dày đặc liên kết</span>
+                            <span>84%</span>
+                        </div>
+                        <div class="w-full bg-white/5 h-1 rounded-full">
+                            <div class="bg-indigo-500 h-full w-[84%]" style="box-shadow: 0 0 10px #6366f1;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Center Info Overlay (Hidden until node clicked) -->
+                <div id="nodeInfo" class="hidden glass-panel p-6 rounded-3xl max-w-sm border-indigo-500/30 scale-90 opacity-0 transition-all duration-500">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm" id="nodeTitle">Tên tài liệu</h4>
+                            <p class="text-[10px] text-gray-400">ID: Vector-992-X</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-300 leading-relaxed mb-4" id="nodeContent">
+                        Nội dung tóm tắt của đoạn kiến thức này sẽ được hiển thị ở đây khi bạn tương tác với các nút trên bản đồ...
+                    </p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] text-indigo-400 font-bold uppercase">98% Relevance</span>
+                        <button class="text-[10px] bg-white/10 px-3 py-1 rounded-lg hover:bg-white/20">Mở toàn bộ</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Quick Docs Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="node-card glass-panel p-4 rounded-2xl flex flex-col gap-3">
+                    <i class="far fa-file-pdf text-red-400 text-xl"></i>
+                    <span class="text-[11px] font-bold truncate">Báo cáo Q4.pdf</span>
+                    <div class="text-[9px] text-gray-500 uppercase tracking-tighter">242 Chunks</div>
+                </div>
+                <div class="node-card glass-panel p-4 rounded-2xl flex flex-col gap-3 border-indigo-500/20">
+                    <i class="far fa-file-code text-blue-400 text-xl"></i>
+                    <span class="text-[11px] font-bold truncate">Codebase_v1.zip</span>
+                    <div class="text-[9px] text-gray-500 uppercase tracking-tighter">1,052 Vectors</div>
+                </div>
+                <div class="node-card glass-panel p-4 rounded-2xl flex flex-col gap-3">
+                    <i class="far fa-comment-dots text-emerald-400 text-xl"></i>
+                    <span class="text-[11px] font-bold truncate">Interview_Notes.txt</span>
+                    <div class="text-[9px] text-gray-500 uppercase tracking-tighter">12 Chunks</div>
+                </div>
+                <div class="node-card glass-panel p-4 rounded-2xl border-dashed border-white/10 flex flex-col items-center justify-center gap-2 hover:bg-white/5">
+                    <i class="fas fa-cloud-upload-alt text-gray-600"></i>
+                    <span class="text-[9px] font-bold text-gray-600 uppercase">Thêm nguồn</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Section: AI Interface -->
+        <div class="w-full md:w-[400px] flex flex-col gap-4">
+            <div class="flex-1 glass-panel rounded-[2rem] flex flex-col overflow-hidden">
+                <!-- Chat Header -->
+                <div class="p-6 border-b border-white/5 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]"></div>
+                        <span class="text-xs font-bold uppercase tracking-widest text-gray-400">AI Processor</span>
+                    </div>
+                    <div class="flex -space-x-2">
+                        <div class="w-6 h-6 rounded-full border-2 border-slate-900 bg-indigo-500"></div>
+                        <div class="w-6 h-6 rounded-full border-2 border-slate-900 bg-purple-500"></div>
+                    </div>
+                </div>
+
+                <!-- Chat Body -->
+                <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scroll" id="chatArea">
+                    <div class="space-y-2">
+                        <p class="text-[10px] text-indigo-400 font-bold uppercase ml-2">System</p>
+                        <div class="bg-white/5 p-4 rounded-2xl rounded-tl-none text-sm text-gray-300 leading-relaxed">
+                            Chào bạn! Tôi đã đồng bộ hóa <span class="text-white font-bold">4,129 vectors</span> tri thức. Bạn cần truy vấn thông tin gì từ "Bộ não" của mình?
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input -->
+                <div class="p-6 pt-0">
+                    <div class="relative group">
+                        <input type="text" id="userInput" placeholder="Nhập câu hỏi tại đây..." 
+                               class="chat-input w-full py-4 pl-6 pr-14 rounded-2xl outline-none text-sm">
+                        <button onclick="handleSend()" class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/30 hover:scale-105 active:scale-95 transition-all">
+                            <i class="fas fa-paper-plane text-xs"></i>
+                        </button>
+                    </div>
+                    <div class="mt-4 flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                        <button class="whitespace-nowrap text-[10px] bg-white/5 px-3 py-1.5 rounded-full border border-white/5 hover:border-indigo-500/50 transition-all text-gray-400">
+                            Tóm tắt dự án X
+                        </button>
+                        <button class="whitespace-nowrap text-[10px] bg-white/5 px-3 py-1.5 rounded-full border border-white/5 hover:border-indigo-500/50 transition-all text-gray-400">
+                            Tìm lỗi trong file logic.py
+                        </button>
+                        <button class="whitespace-nowrap text-[10px] bg-white/5 px-3 py-1.5 rounded-full border border-white/5 hover:border-indigo-500/50 transition-all text-gray-400">
+                            Phân tích rủi ro
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tool Panel -->
+            <div class="glass-panel p-4 rounded-[1.5rem] flex items-center justify-around">
+                <button class="text-gray-500 hover:text-indigo-400 transition-colors flex flex-col items-center gap-1">
+                    <i class="fas fa-cog text-lg"></i>
+                    <span class="text-[8px] font-bold uppercase">Settings</span>
+                </button>
+                <div class="w-px h-8 bg-white/5"></div>
+                <button class="text-gray-500 hover:text-indigo-400 transition-colors flex flex-col items-center gap-1">
+                    <i class="fas fa-history text-lg"></i>
+                    <span class="text-[8px] font-bold uppercase">History</span>
+                </button>
+                <div class="w-px h-8 bg-white/5"></div>
+                <button class="text-gray-500 hover:text-indigo-400 transition-colors flex flex-col items-center gap-1">
+                    <i class="fas fa-shield-alt text-lg"></i>
+                    <span class="text-[8px] font-bold uppercase">Privacy</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('networkCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const particleCount = 60;
+        const maxDistance = 150;
+
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.5,
+                    vy: (Math.random() - 0.5) * 0.5,
+                    size: Math.random() * 3 + 1,
+                    color: i % 5 === 0 ? '#6366f1' : i % 8 === 0 ? '#a855f7' : '#ffffff22'
+                });
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let i = 0; i < particles.length; i++) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+
+                // Draw lines
+                for (let j = i + 1; j < particles.length; j++) {
+                    let p2 = particles[j];
+                    let dist = Math.sqrt((p.x - p2.x)**2 + (p.y - p2.y)**2);
+                    if (dist < maxDistance) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(99, 102, 241, ${1 - dist/maxDistance})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', initCanvas);
+        initCanvas();
+        draw();
+
+        // Chat logic
+        function handleSend() {
+            const input = document.getElementById('userInput');
+            const chatArea = document.getElementById('chatArea');
+            if (!input.value.trim()) return;
+
+            // User message
+            const userMsg = `
+                <div class="space-y-2 text-right">
+                    <p class="text-[10px] text-purple-400 font-bold uppercase mr-2">You</p>
+                    <div class="inline-block bg-indigo-600/20 p-4 rounded-2xl rounded-tr-none text-sm text-white border border-indigo-500/20">
+                        ${input.value}
+                    </div>
+                </div>
+            `;
+            chatArea.insertAdjacentHTML('beforeend', userMsg);
+            
+            const query = input.value;
+            input.value = '';
+            chatArea.scrollTop = chatArea.scrollHeight;
+
+            // Simulate AI response + Node highlight
+            setTimeout(() => {
+                const aiMsg = `
+                    <div class="space-y-2">
+                        <p class="text-[10px] text-indigo-400 font-bold uppercase ml-2">Neural Brain</p>
+                        <div class="bg-white/5 p-4 rounded-2xl rounded-tl-none text-sm text-gray-300 leading-relaxed">
+                            Đang truy xuất dữ liệu liên quan đến "${query}"... Tôi tìm thấy mối liên hệ mạnh mẽ nhất ở cụm <span class="text-indigo-400">Marketing_Strategy</span>.
+                        </div>
+                    </div>
+                `;
+                chatArea.insertAdjacentHTML('beforeend', aiMsg);
+                chatArea.scrollTop = chatArea.scrollHeight;
+
+                // Show node info
+                const nodeInfo = document.getElementById('nodeInfo');
+                nodeInfo.classList.remove('hidden');
+                setTimeout(() => {
+                    nodeInfo.classList.add('scale-100', 'opacity-100');
+                    document.getElementById('nodeTitle').innerText = "Marketing_Strategy_2024.pdf";
+                    document.getElementById('nodeContent').innerText = "Trích đoạn: 'Chiến lược tập trung vào các kênh digital truyền thông xã hội với ngân sách dự kiến tăng 20%...'";
+                }, 100);
+            }, 1000);
+        }
+    </script>
 </body>
 </html>
