@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Souly Vault V12.2 - Custom API Key</title>
+    <title>Souly Vault V12.3 - Stable Model</title>
     <style>
         :root {
             --bg: #0a0a0f;
@@ -183,12 +183,12 @@
 
 <div class="app-container">
     <div class="sidebar">
-        <div class="brand"><span>⚡</span> SOULY V12.2</div>
+        <div class="brand"><span>⚡</span> SOULY V12.3</div>
         
-        <div class="section-label">Cấu hình API cá nhân</div>
+        <div class="section-label">API Key Cá Nhân</div>
         <div class="key-input-group">
-            <input type="password" id="customApiKey" class="small-input" placeholder="Dán Gemini API Key của bạn...">
-            <p style="font-size: 10px; color: var(--text-dim); margin-top: 5px;">* Key sẽ được ưu tiên sử dụng để tránh lỗi "Unregistered".</p>
+            <input type="password" id="customApiKey" class="small-input" placeholder="Dán Gemini API Key...">
+            <p style="font-size: 10px; color: var(--text-dim); margin-top: 5px;">* Sử dụng model: <b>gemini-1.5-flash</b> để ổn định nhất.</p>
         </div>
 
         <div class="section-label">Công cụ</div>
@@ -207,22 +207,21 @@
     <div class="chat-area">
         <div id="messages">
             <div class="msg ai">
-                Chào bạn! Để tránh lỗi kết nối, bạn có thể <b>dán API Key cá nhân</b> của mình vào ô bên trái nhé. <br><br>
-                Nếu không có Key, mình vẫn sẽ thử sử dụng hệ thống mặc định. Hãy thử gửi tin nhắn hoặc ảnh ngay!
+                Đã cập nhật hệ thống! Mình đã chuyển sang dùng <b>Gemini 1.5 Flash</b> - phiên bản ổn định nhất hiện nay để tránh lỗi "Not Found".<br><br>
+                Hãy dán API Key của bạn vào ô bên trái và bắt đầu nhé!
             </div>
         </div>
         
-        <div id="loader" class="loader">Souly đang suy nghĩ...</div>
+        <div id="loader" class="loader">Souly đang xử lý...</div>
 
         <div class="input-bar">
-            <input type="text" id="userInput" class="main-input" placeholder="Nhập câu hỏi..." onkeydown="if(event.key==='Enter') send()">
+            <input type="text" id="userInput" class="main-input" placeholder="Nhập tin nhắn..." onkeydown="if(event.key==='Enter') send()">
             <button class="btn primary" id="sendBtn" onclick="send()" style="margin-bottom: 0; padding: 0 25px;">GỬI</button>
         </div>
     </div>
 </div>
 
 <script>
-    // Khóa API mặc định từ hệ thống (có thể bị trống nếu môi trường chặn)
     const defaultApiKey = ""; 
     let base64Image = null;
     let isBusy = false;
@@ -246,7 +245,7 @@
             const p = document.getElementById('preview');
             p.src = e.target.result;
             p.style.display = 'block';
-            addMessage('ai', '<i>🖼️ Đã đính kèm ảnh. Bạn muốn mình làm gì với ảnh này?</i>');
+            addMessage('ai', '<i>🖼️ Ảnh đã sẵn sàng. Bạn muốn hỏi gì về ảnh này không?</i>');
         };
         reader.readAsDataURL(file);
     }
@@ -256,43 +255,40 @@
         const customKey = document.getElementById('customApiKey').value.trim();
         const text = input.value.trim();
         
-        // Ưu tiên custom key của người dùng
         const activeKey = customKey || defaultApiKey;
 
         if (isBusy || (!text && !base64Image)) return;
         
         if (!activeKey) {
-            addMessage('system', "LỖI: Không tìm thấy API Key. Vui lòng dán Key của bạn vào ô bên trái.");
+            addMessage('system', "LỖI: Bạn chưa nhập API Key cá nhân ở cột bên trái.");
             return;
         }
 
-        addMessage('user', text || "Phân tích ảnh này");
+        addMessage('user', text || "Xem hình ảnh này");
         input.value = '';
         setLoading(true);
 
         const payload = {
             contents: [{
                 parts: [
-                    { text: text || "Mô tả hình ảnh này một cách chi tiết." },
+                    { text: text || "Phân tích hình ảnh này." },
                     ...(base64Image ? [{ inlineData: { mimeType: "image/png", data: base64Image } }] : [])
                 ]
             }]
         };
 
         try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${activeKey}`;
+            // Chuyển sang model 1.5 flash để tương thích tối đa với mọi Key
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
             
             const response = await fetchWithRetry(url, payload);
             const data = await response.json();
 
             if (!response.ok) {
-                if (data.error?.message?.includes("API key not valid")) {
-                    throw new Error("API Key bạn nhập không hợp lệ. Vui lòng kiểm tra lại.");
-                }
-                throw new Error(data.error?.message || "Lỗi API không xác định");
+                throw new Error(data.error?.message || "Lỗi API");
             }
 
-            const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không có phản hồi từ AI.";
+            const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không nhận được phản hồi.";
             addMessage('ai', aiResponse);
             
             if (base64Image) {
@@ -302,7 +298,6 @@
             }
 
         } catch (err) {
-            console.error(err);
             addMessage('system', `<b>LỖI:</b> ${err.message}`);
         } finally {
             setLoading(false);
