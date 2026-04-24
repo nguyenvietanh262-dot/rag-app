@@ -3,367 +3,248 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neural Vision Engine | AI Vision Analyzer</title>
+    <title>Vision AI Explorer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
-        
-        :root {
-            --primary: #6366f1;
-            --secondary: #a855f7;
-            --accent: #22d3ee;
-            --bg: #05070a;
-        }
-
-        body {
-            font-family: 'Space Grotesk', sans-serif;
-            background-color: var(--bg);
-            color: #fff;
-            margin: 0;
-            overflow: hidden;
-            height: 100vh;
-        }
-
-        #neuralCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        .glass {
-            background: rgba(13, 17, 28, 0.7);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .chat-scroll::-webkit-scrollbar { width: 4px; }
-        .chat-scroll::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 10px; }
-
-        .typing-dot {
-            width: 5px; height: 5px; background: var(--primary);
-            border-radius: 50%; animation: blink 1.4s infinite both;
-        }
-        @keyframes blink { 0%, 100% { opacity: 0.2; } 20% { opacity: 1; } }
-
-        .scanline {
-            width: 100%; height: 3px;
-            background: linear-gradient(to bottom, transparent, var(--primary), transparent);
-            position: absolute; top: 0; left: 0;
-            z-index: 5; pointer-events: none;
-            animation: scan 3s linear infinite;
-            box-shadow: 0 0 20px var(--primary);
-        }
-        @keyframes scan { from { top: -10%; } to { top: 110%; } }
-
-        .error-toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(220, 38, 38, 0.95);
-            padding: 14px 28px;
-            border-radius: 16px;
-            z-index: 1000;
-            display: none;
-            box-shadow: 0 10px 40px rgba(220, 38, 38, 0.3);
-        }
+        body { background-color: #0f172a; color: #f8fafc; font-family: sans-serif; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        @keyframes pulse-border { 0% { border-color: rgba(99, 102, 241, 0.2); } 50% { border-color: rgba(99, 102, 241, 0.8); } 100% { border-color: rgba(99, 102, 241, 0.2); } }
+        .analyzing { animation: pulse-border 2s infinite; border-width: 2px; }
     </style>
 </head>
-<body>
+<body class="h-screen flex flex-col overflow-hidden">
 
-    <canvas id="neuralCanvas"></canvas>
-    <div id="error-toast" class="error-toast font-bold text-sm"></div>
-
-    <div class="relative z-10 flex h-screen p-6 gap-6 overflow-hidden">
-        
-        <!-- Left: AI Vision Workbench -->
-        <div class="flex-1 flex flex-col gap-6">
-            <div class="glass rounded-[2rem] p-6 flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center">
-                        <i class="fas fa-eye text-xl text-white"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-2xl font-bold">VISION <span class="text-indigo-400">ENGINE</span></h1>
-                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Trình phân tích thị giác AI</p>
-                    </div>
-                </div>
-                <div id="connection-status" class="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 rounded-full border border-emerald-500/20">
-                    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <span class="text-[10px] font-bold text-emerald-400 uppercase">Sẵn sàng</span>
-                </div>
+    <!-- Header -->
+    <header class="p-4 border-b border-white/10 flex justify-between items-center bg-slate-900">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-brain text-white"></i>
             </div>
+            <h1 class="text-xl font-bold tracking-tight">Vision<span class="text-indigo-400">Explorer</span></h1>
+        </div>
+        <div id="status-tag" class="text-[10px] px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-400 uppercase font-bold">
+            Hệ thống sẵn sàng
+        </div>
+    </header>
 
-            <!-- Visualization Main View -->
-            <div class="flex-1 relative glass rounded-[3rem] overflow-hidden flex items-center justify-center border-white/5">
-                <div id="empty-state" class="text-center">
-                    <div class="w-24 h-24 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-cloud-upload-alt text-4xl text-indigo-400"></i>
+    <main class="flex-1 flex overflow-hidden p-4 gap-4">
+        <!-- Left: Image Area -->
+        <div class="flex-[1.5] flex flex-col gap-4">
+            <div id="drop-zone" class="flex-1 glass-panel rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group">
+                <img id="main-image" class="hidden max-w-full max-h-full object-contain p-4 z-10">
+                
+                <div id="upload-prompt" class="text-center z-20">
+                    <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700 group-hover:border-indigo-500 transition-colors">
+                        <i class="fas fa-upload text-2xl text-slate-400 group-hover:text-indigo-400"></i>
                     </div>
-                    <h2 class="text-xl font-bold mb-2">Chưa có dữ liệu hình ảnh</h2>
-                    <p class="text-gray-500 text-sm mb-8">Hãy tải ảnh lên để AI bắt đầu phân tích đa chiều</p>
-                    <label class="px-8 py-4 bg-indigo-600 rounded-2xl cursor-pointer hover:bg-indigo-500 transition-all font-bold shadow-xl shadow-indigo-500/20 active:scale-95 inline-flex items-center gap-3">
-                        <i class="fas fa-plus"></i> CHỌN HÌNH ẢNH
-                        <input type="file" id="image-input" class="hidden" accept="image/*" onchange="handleImage(event)">
+                    <p class="text-slate-400 mb-4">Kéo thả hoặc chọn ảnh để phân tích</p>
+                    <label class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded-full cursor-pointer transition-all font-medium text-sm">
+                        Chọn tệp
+                        <input type="file" class="hidden" accept="image/*" onchange="processImage(this)">
                     </label>
                 </div>
-                
-                <img id="preview-img" class="hidden max-w-full max-h-full object-contain p-8">
-                <div id="scan-layer" class="hidden absolute inset-0"><div class="scanline"></div></div>
 
-                <!-- Floating Analysis Card -->
-                <div id="floating-node" class="absolute hidden top-8 right-8 glass p-6 rounded-[2rem] w-80 border-indigo-500/30 scale-in z-50 shadow-2xl">
-                    <h3 id="node-title" class="text-sm font-bold uppercase text-indigo-400 mb-2">--</h3>
-                    <p id="node-desc" class="text-xs text-gray-300 leading-relaxed mb-6">--</p>
-                    <button onclick="closeNode()" class="w-full py-3 bg-white/5 rounded-xl text-[10px] font-bold uppercase hover:bg-white/10 transition-all">Đóng chi tiết</button>
-                </div>
+                <div id="scan-bar" class="hidden absolute w-full h-1 bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.8)] top-0 left-0 z-30"></div>
             </div>
 
-            <!-- Knowledge Base Grid -->
-            <div class="glass rounded-[2rem] p-6 border-white/5">
-                <h4 class="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-4">Các thực thể phát hiện được</h4>
-                <div id="knowledge-grid" class="grid grid-cols-4 gap-4 h-24">
-                    <!-- Placeholder cards -->
-                    <div class="border border-white/5 rounded-2xl bg-white/[0.02]"></div>
-                    <div class="border border-white/5 rounded-2xl bg-white/[0.02]"></div>
-                    <div class="border border-white/5 rounded-2xl bg-white/[0.02]"></div>
-                    <div class="border border-white/5 rounded-2xl bg-white/[0.02]"></div>
+            <div class="h-32 glass-panel rounded-2xl p-4 overflow-hidden flex flex-col">
+                <h3 class="text-[10px] uppercase font-bold text-slate-500 mb-2">Thông tin ảnh</h3>
+                <div id="image-meta" class="text-sm text-slate-300">
+                    Chưa có dữ liệu. Hãy tải ảnh lên để AI bắt đầu quét.
                 </div>
             </div>
         </div>
 
-        <!-- Right: Control & Chat -->
-        <div class="w-[420px] flex flex-col gap-6">
-            <div class="flex-1 glass rounded-[2.5rem] flex flex-col overflow-hidden">
-                <div class="p-6 border-b border-white/5 bg-white/[0.02] flex items-center gap-3">
-                    <i class="fas fa-comments text-indigo-500"></i>
-                    <span class="text-xs font-bold uppercase tracking-widest">Trợ lý Phân tích</span>
-                </div>
+        <!-- Right: Chat Area -->
+        <div class="flex-1 glass-panel rounded-2xl flex flex-col overflow-hidden border-indigo-500/20">
+            <div class="p-4 border-b border-white/5 flex items-center justify-between">
+                <span class="text-xs font-bold uppercase text-slate-400">Trợ lý AI</span>
+                <button onclick="clearChat()" class="text-[10px] text-slate-500 hover:text-white uppercase">Xóa hội thoại</button>
+            </div>
 
-                <div id="chat-messages" class="flex-1 p-6 space-y-6 overflow-y-auto chat-scroll">
-                    <div class="flex gap-4">
-                        <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0">
-                            <i class="fas fa-robot text-xs text-white"></i>
-                        </div>
-                        <div class="bg-white/5 p-4 rounded-2xl rounded-tl-none text-sm text-gray-300 leading-relaxed">
-                            Chào bạn! Tôi là Engine phân tích thị giác. Bạn có thể:<br>
-                            1. Tải một tấm ảnh bất kỳ lên.<br>
-                            2. Tôi sẽ trích xuất thông tin.<br>
-                            3. Nhấn <b>Enter</b> để hỏi tôi chi tiết về ảnh.
-                        </div>
-                    </div>
+            <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                <div class="bg-slate-800/50 p-3 rounded-xl rounded-tl-none border border-white/5 text-sm leading-relaxed">
+                    Chào bạn! Tôi có thể giúp bạn nhìn và phân tích hình ảnh. Bạn hãy tải ảnh lên nhé.
                 </div>
+            </div>
 
-                <div class="p-6">
-                    <div id="ai-typing" class="hidden mb-3 flex gap-1 ml-12">
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot" style="animation-delay: 0.2s"></div>
-                        <div class="typing-dot" style="animation-delay: 0.4s"></div>
-                    </div>
-                    <div class="relative">
-                        <textarea id="chat-input" placeholder="Hỏi về hình ảnh... (Enter để gửi)" 
-                                  class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-14 text-sm outline-none focus:border-indigo-500/50 transition-all resize-none max-h-32"
-                                  rows="1" onkeydown="handleKeyDown(event)"></textarea>
-                        <button onclick="sendChatMessage()" class="absolute right-2 bottom-2 w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
-                            <i class="fas fa-paper-plane text-xs text-white"></i>
-                        </button>
-                    </div>
+            <div id="loading-indicator" class="hidden px-4 py-2">
+                <div class="flex gap-1">
+                    <div class="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce"></div>
+                    <div class="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                    <div class="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-slate-900/50">
+                <div class="relative">
+                    <input type="text" id="user-input" 
+                           class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 pr-12 text-sm focus:outline-none focus:border-indigo-500 transition-all" 
+                           placeholder="Hỏi về ảnh..."
+                           onkeypress="if(event.key==='Enter') sendMessage()">
+                    <button onclick="sendMessage()" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center hover:bg-indigo-500 transition-colors">
+                        <i class="fas fa-paper-plane text-[10px]"></i>
+                    </button>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
     <script>
-        // Cấu hình môi trường (KHÔNG ĐƯỢC THAY ĐỔI apiKey)
-        const apiKey = "";
-        let currentImageData = null;
+        const apiKey = ""; // Sẽ được hệ thống tự điền
+        let base64Image = null;
 
-        // --- Canvas Background Logic ---
-        const canvas = document.getElementById('neuralCanvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
+        async function safeApiCall(payload) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            let attempts = 0;
+            const maxAttempts = 5;
 
-        function initParticles() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            particles = Array.from({length: 100}, () => ({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                vx: (Math.random() - 0.5) * 0.5,
-                vy: (Math.random() - 0.5) * 0.5
-            }));
-        }
-
-        function animate() {
-            ctx.clearRect(0,0,canvas.width, canvas.height);
-            particles.forEach(p => {
-                p.x += p.vx; p.y += p.vy;
-                if(p.x<0 || p.x>canvas.width) p.vx*=-1;
-                if(p.y<0 || p.y>canvas.height) p.vy*=-1;
-                ctx.fillStyle = "rgba(99, 102, 241, 0.2)";
-                ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI*2); ctx.fill();
-            });
-            requestAnimationFrame(animate);
-        }
-
-        // --- Core Functions ---
-        function showToast(msg) {
-            const toast = document.getElementById('error-toast');
-            toast.innerText = msg;
-            toast.style.display = 'block';
-            setTimeout(() => toast.style.display = 'none', 5000);
-        }
-
-        async function apiCall(url, body) {
-            let retries = 5;
-            let delay = 1000;
-            while(retries > 0) {
+            while (attempts < maxAttempts) {
                 try {
                     const response = await fetch(url, {
                         method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(body)
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
                     });
                     if (response.ok) return await response.json();
-                    if (response.status === 429) { /* Backoff */ }
-                    else throw new Error("API_ERROR");
+                    if (response.status === 429) {
+                        await new Promise(r => setTimeout(r, Math.pow(2, attempts) * 1000));
+                        attempts++;
+                        continue;
+                    }
+                    throw new Error(`HTTP ${response.status}`);
                 } catch (e) {
-                    if (retries === 1) throw e;
+                    attempts++;
+                    if (attempts === maxAttempts) throw e;
+                    await new Promise(r => setTimeout(r, Math.pow(2, attempts) * 1000));
                 }
-                await new Promise(r => setTimeout(r, delay));
-                delay *= 2;
-                retries--;
             }
         }
 
-        async function handleImage(e) {
-            const file = e.target.files[0];
+        function processImage(input) {
+            const file = input.files[0];
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = async (event) => {
-                const base64 = event.target.result.split(',')[1];
-                currentImageData = base64;
+            reader.onload = function(e) {
+                base64Image = e.target.result.split(',')[1];
                 
-                document.getElementById('empty-state').classList.add('hidden');
-                document.getElementById('preview-img').src = event.target.result;
-                document.getElementById('preview-img').classList.remove('hidden');
-                document.getElementById('scan-layer').classList.remove('hidden');
+                // UI Updates
+                document.getElementById('upload-prompt').classList.add('hidden');
+                const img = document.getElementById('main-image');
+                img.src = e.target.result;
+                img.classList.remove('hidden');
                 
-                addChatMessage('ai', "Đã nhận được dữ liệu hình ảnh. Bắt đầu phân tích cấu trúc...");
-                analyzeImage(base64);
+                document.getElementById('image-meta').innerHTML = `
+                    <div class="flex gap-4">
+                        <span><b class="text-indigo-400">Tên:</b> ${file.name}</span>
+                        <span><b class="text-indigo-400">Cỡ:</b> ${(file.size/1024).toFixed(1)} KB</span>
+                    </div>
+                `;
+
+                startInitialAnalysis();
             };
             reader.readAsDataURL(file);
         }
 
-        async function analyzeImage(base64) {
-            const prompt = "Phân tích ảnh này và trả về kết quả dưới dạng JSON (không cần markdown): [{\"title\": \"Vật thể\", \"description\": \"mô tả chi tiết\", \"relevance\": 0.9}]. Tối đa 4 vật thể quan trọng nhất.";
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        async function startInitialAnalysis() {
+            if (!base64Image) return;
+            
+            const scanBar = document.getElementById('scan-bar');
+            const dropZone = document.getElementById('drop-zone');
+            
+            scanBar.classList.remove('hidden');
+            scanBar.style.animation = "scan 2s linear infinite";
+            dropZone.classList.add('analyzing');
+            
+            addMessage('ai', "Tôi đang quét hình ảnh này, vui lòng đợi giây lát...");
 
             try {
-                const data = await apiCall(url, {
-                    contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/png", data: base64 } }] }]
+                const data = await safeApiCall({
+                    contents: [{
+                        parts: [
+                            { text: "Hãy mô tả ngắn gọn và liệt kê 3 đặc điểm nổi bật nhất bạn thấy trong ảnh này bằng tiếng Việt." },
+                            { inlineData: { mimeType: "image/png", data: base64Image } }
+                        ]
+                    }]
                 });
 
-                const rawText = data.candidates[0].content.parts[0].text;
-                const cleanJson = rawText.replace(/```json|```/g, '').trim();
-                const items = JSON.parse(cleanJson);
-                
-                updateKnowledgeGrid(items);
-                document.getElementById('scan-layer').classList.add('hidden');
-                addChatMessage('ai', "Phân tích hoàn tất. Bạn có thể nhấn vào các thẻ dữ liệu bên dưới hoặc chat để hỏi thêm.");
+                const responseText = data.candidates[0].content.parts[0].text;
+                addMessage('ai', responseText);
             } catch (err) {
-                showToast("Không thể kết nối với máy chủ AI. Vui lòng thử lại sau.");
-                document.getElementById('scan-layer').classList.add('hidden');
+                addMessage('ai', "Có lỗi xảy ra khi kết nối. Hãy thử đặt câu hỏi trực tiếp hoặc tải lại ảnh.");
+            } finally {
+                scanBar.classList.add('hidden');
+                dropZone.classList.remove('analyzing');
             }
         }
 
-        function updateKnowledgeGrid(items) {
-            const grid = document.getElementById('knowledge-grid');
-            grid.innerHTML = '';
-            items.forEach(item => {
-                const card = document.createElement('div');
-                card.className = "bg-indigo-600/10 border border-indigo-500/20 rounded-2xl p-3 cursor-pointer hover:bg-indigo-600/20 transition-all";
-                card.onclick = () => {
-                    document.getElementById('floating-node').classList.remove('hidden');
-                    document.getElementById('node-title').innerText = item.title;
-                    document.getElementById('node-desc').innerText = item.description;
-                };
-                card.innerHTML = `
-                    <div class="text-[8px] text-indigo-400 font-bold mb-1 tracking-tighter">DETECTED_ENTITY</div>
-                    <div class="text-[10px] font-bold truncate">${item.title}</div>
-                    <div class="mt-2 h-1 bg-white/5 rounded-full overflow-hidden">
-                        <div class="h-full bg-indigo-500" style="width: ${item.relevance * 100}%"></div>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        // --- Chat Interaction ---
-        function handleKeyDown(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendChatMessage();
-            }
-        }
-
-        async function sendChatMessage() {
-            const input = document.getElementById('chat-input');
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const chatBox = document.getElementById('chat-box');
+            const loading = document.getElementById('loading-indicator');
             const text = input.value.trim();
+
             if (!text) return;
 
-            addChatMessage('user', text);
+            addMessage('user', text);
             input.value = '';
-            input.style.height = 'auto';
-            document.getElementById('ai-typing').classList.remove('hidden');
-
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            const parts = [{ text: text }];
-            if (currentImageData) parts.push({ inlineData: { mimeType: "image/png", data: currentImageData } });
+            loading.classList.remove('hidden');
+            chatBox.scrollTop = chatBox.scrollHeight;
 
             try {
-                const data = await apiCall(url, { contents: [{ parts }] });
-                const aiResponse = data.candidates[0].content.parts[0].text;
-                addChatMessage('ai', aiResponse);
+                const parts = [{ text: text }];
+                if (base64Image) {
+                    parts.push({ inlineData: { mimeType: "image/png", data: base64Image } });
+                }
+
+                const data = await safeApiCall({
+                    contents: [{ parts }]
+                });
+
+                const aiText = data.candidates[0].content.parts[0].text;
+                addMessage('ai', aiText);
             } catch (err) {
-                showToast("Lỗi kết nối khi gửi tin nhắn.");
-                addChatMessage('ai', "Xin lỗi, tôi gặp sự cố khi xử lý dữ liệu. Bạn vui lòng gửi lại nhé.");
+                addMessage('ai', "Lỗi: Không thể nhận phản hồi từ AI. Hãy kiểm tra kết nối mạng.");
             } finally {
-                document.getElementById('ai-typing').classList.add('hidden');
+                loading.classList.add('hidden');
             }
         }
 
-        function addChatMessage(role, text) {
-            const container = document.getElementById('chat-messages');
-            const div = document.createElement('div');
-            div.className = `flex gap-4 ${role === 'user' ? 'flex-row-reverse' : ''} animate-in fade-in slide-in-from-bottom-2`;
-            
-            div.innerHTML = `
-                <div class="w-8 h-8 rounded-lg ${role === 'user' ? 'bg-indigo-900' : 'bg-indigo-600'} flex items-center justify-center shrink-0">
-                    <i class="fas ${role === 'user' ? 'fa-user' : 'fa-robot'} text-[10px] text-white"></i>
-                </div>
-                <div class="${role === 'user' ? 'bg-indigo-600/20' : 'bg-white/5'} p-4 rounded-2xl text-sm text-gray-300 leading-relaxed max-w-[85%] whitespace-pre-wrap">
-                    ${text}
-                </div>
-            `;
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
+        function addMessage(role, text) {
+            const chatBox = document.getElementById('chat-box');
+            const msg = document.createElement('div');
+            if (role === 'user') {
+                msg.className = "ml-auto bg-indigo-600 text-white p-3 rounded-xl rounded-tr-none text-sm max-w-[80%] shadow-lg";
+            } else {
+                msg.className = "bg-slate-800/80 border border-white/5 p-3 rounded-xl rounded-tl-none text-sm text-slate-200 leading-relaxed max-w-[90%]";
+            }
+            msg.innerText = text;
+            chatBox.appendChild(msg);
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        function closeNode() { document.getElementById('floating-node').classList.add('hidden'); }
-
-        // Textarea auto-height
-        document.getElementById('chat-input').addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = this.scrollHeight + 'px';
-        });
-
-        window.onload = () => { initParticles(); animate(); };
-        window.onresize = initParticles;
+        function clearChat() {
+            document.getElementById('chat-box').innerHTML = `
+                <div class="bg-slate-800/50 p-3 rounded-xl rounded-tl-none border border-white/5 text-sm leading-relaxed">
+                    Đã xóa lịch sử. Bạn muốn hỏi gì về ảnh hiện tại không?
+                </div>
+            `;
+        }
+        
+        // CSS Animation for scan bar
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes scan {
+                0% { top: 0; }
+                50% { top: 100%; }
+                100% { top: 0; }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
